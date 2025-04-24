@@ -1,3 +1,6 @@
 [submodule "Pan-Tomkins-algorithm-python"]
 	path = Pan-Tomkins-algorithm-python
 	url = https://github.com/Pramod07Ch/Pan-Tompkins-algorithm-python
+[submodule "Pan-Tompkins-algorithm-python"]
+	path = Pan-Tompkins-algorithm-python
+	url = https://github.com/Pramod07Ch/Pan-Tompkins-algorithm-python
