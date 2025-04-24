@@ -8,7 +8,7 @@ filters_proto.py: Is for testing algorithm of filter to be implemented on Ada. <
 ecg_uart_test.py: Is for sending a whole ECG signal. 
 
 ## PREREQUISITES ##
-You will need Alire, st-flash, python3 and installed the right toolchain for Ada (gnat-arm-elf).<br/>
+You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).<br/>
 Or download with: `alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1`<br/>
 Then, download the ADL fork for Alire beside this project: [git clone](https://github.com/lgehu/alr_adl_crates.git)
 
