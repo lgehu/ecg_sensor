@@ -10,12 +10,16 @@ ecg_uart_test.py: Is for sending a whole ECG signal.
 ## PREREQUISITES (Linux) ##
 You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).<br/>
 Download the package manager for Ada (Alire): <\br>
-`wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip`
-`unzip alr-2.0.2-bin-x86_64-linux.zip`
-`mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
-`alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1`<br/>
+```bash
+wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip
+unzip alr-2.0.2-bin-x86_64-linux.zip
+mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
+alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1
+```
 Then, download the ADL fork for Alire beside this project: <br/>
-`git clone https://github.com/lgehu/alr_adl_crates.git`<br/>
+```bash
+git clone https://github.com/lgehu/alr_adl_crates.git
+```
 Your_folder <br/>
 │ </br>
 ├── ecg_sensor <br/>
