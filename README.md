@@ -3,11 +3,11 @@ The goal is to virtualize a sensor in the STM32F446RE that can process ECG data 
 Data are transmit through UART with a python script, then, the MCU process the data in real time and should return the heart rate.
 
 ## SCRIPTS ## 
-uart_test.py -> Is intented for testing the UART and transmist signed integer on 16 bits. 
-filters_proto.py -> Is for testing algorithm of filter to be implemented on Ada.
-ecg_uart_test.py -> Is for sending a whole ECG signal.
+uart_test.py: Is intented for testing the UART and transmist signed integer on 16 bits. 
+filters_proto.py: Is for testing algorithm of filter to be implemented on Ada. 
+ecg_uart_test.py: Is for sending a whole ECG signal. 
 
-## PREREQUESTES ##
+## PREREQUISITES ##
 You will need Alire, st-flash, python3 and installed the right toolchain for Ada (gnat-arm-elf).
 Or download with: `alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1`
 Then, download the ADL fork for Alire beside this project: [git clone](https://github.com/lgehu/alr_adl_crates.git)
