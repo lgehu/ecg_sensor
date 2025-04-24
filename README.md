@@ -15,9 +15,10 @@ Download the package manager for Ada (Alire): <\br>
 `mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
 `alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1`<br/>
 Then, download the ADL fork for Alire beside this project: <br/>
-`git clone https://github.com/lgehu/alr_adl_crates.git`
+`git clone https://github.com/lgehu/alr_adl_crates.git`<br/>
+Your_folder <br/>
 │ </br>
-├── ecg_sensor </br>
+├── ecg_sensor <br/>
 ├── alr_adl_crates
     
 ## COMPILATION ##
