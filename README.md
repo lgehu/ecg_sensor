@@ -32,7 +32,8 @@ You can replace 'ecg_test' with an other file in the src/test folder.<br/>
 You should change in the makefile the port of your device if needed.
 
 # TODO #
-- [ ] Flash an ECG signal directly in the board. 
+- [ ] Implement the Pan-Tompkins algorithm (In standby)
+- [ ] Python script to flash an ECG signal directly in the board. 
 
 # ISSUES #
 Python package wfdb and matplotlib wasn't working fine on linux. I had to create a
