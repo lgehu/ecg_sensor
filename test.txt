@@ -1,0 +1,1 @@
+Hello ! A simple file to be copied in the flash of the STM32 !

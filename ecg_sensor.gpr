@@ -2,7 +2,6 @@ with "config/ecg_sensor_config.gpr";
 with "../alr_adl_crates/nucleo_f446re/nucleo_f446re.gpr";
 
 project ECG_Sensor is
-
    for Runtime ("Ada") use nucleo_f446re'Runtime ("Ada");
    for Target use "arm-eabi";
 
@@ -13,6 +12,12 @@ project ECG_Sensor is
    for Object_Dir use "obj/";
    for Create_Missing_Dirs use "True";
 
+   package Linker is
+       for Linker_Options use  ("obj/test.o");
+   end Linker;
+   -- for Objects_Linked use ("obj/test.o");
+   -- for Linker_Switches use ("obj/test.o");
+
    package Compiler renames nucleo_f446re.Compiler;
 
    package Ide is
@@ -20,4 +25,5 @@ project ECG_Sensor is
       for Communication_Protocol use "remote";
       for Connection_Tool use "st-util";
    end Ide;
+
 end ECG_Sensor;

@@ -31,6 +31,49 @@ Plug your device to your computer, then to compile the Ada project run: <br/>
 You can replace 'ecg_test' with an other file in the src/test folder.<br/>
 You should change in the makefile the port of your device if needed.
 
+## Flashing an ECG file to the board ## 
+
+### Testing with linker 
+
+Create an object file to be linked to the program.
+```bash
+alr exec -- arm-eabi-objcopy -I binary -O elf32-littlearm -B arm --rename-section .data=.rodata test.txt obj/test.o
+```
+Or,
+```bash 
+alr exec -- ld -r -b binary --section-start=.rodata=0x0807F000 -o obj/test.o test.txt
+```
+
+To show the generated symboles names, we can print them with:
+```bash
+alr exec -- arm-eabi-nm obj/test.o
+```
+
+To print the content of the file:
+```bash
+alr exec -- arm-eabi-objdump -s -j .rodata obj/test.o
+```
+
+In the GPR add the following lines:
+```Ada
+package Linker is
+      for Linker_Options use ("obj/test.o");
+end Linker;
+
+```
+In Ada, we can then load the symboles:
+```Ada
+   Fichier_Start : System.Address;
+   pragma Import (C, Fichier_Start, "_binary_test_txt_start");
+   Fichier_End : System.Address;
+   pragma Import (C, Fichier_End, "_binary_test_txt_end");
+```
+This doesn't work. First, the only way we found to link an object the binary is by adding an argument to command line ( -largs obj/test.o). Linker options added in the GPR didn't work.
+Once the exernal file linked, the addresses Text_Start and Text_End in the Ada program were not acceptable. For example we had sometime negative value, or Text_Start higher than Text_End. The issue could be during the "ld", dealing bad with these external symbols.
+
+### Solution with a script
+In the script folder, the file to_ada.py take an arbitrary file and generate an array of bytes in the Ada syntax. This way, we can embbed any data during the compilation.
+
 # TODO #
 - [ ] Implement the Pan-Tompkins algorithm (In standby)
 - [ ] Python script to flash an ECG signal directly in the board. 
