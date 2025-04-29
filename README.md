@@ -33,7 +33,7 @@ You should change in the makefile the port of your device if needed.
 
 ## Flashing an ECG file to the board ## 
 
-### Testing with linker 
+### Testing with object linker 
 
 Create an object file to be linked to the program.
 ```bash
@@ -73,10 +73,17 @@ Once the exernal file linked, the addresses Text_Start and Text_End in the Ada p
 
 ### Solution with a script
 In the script folder, the file to_ada.py take an arbitrary file and generate an array of bytes in the Ada syntax. This way, we can embbed any data during the compilation.
+The script can be used like this:
+```bash 
+python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ ECGData --wfdb
+```
+It will generate an array of float32. Then, in the `ecg_script_test.adb`, we iterate through the array, convert it to Int16 and send it using UART at a given sample rate.
+`read_ecg_sensor.py` will acquire data and convert it back to float.
+
 
 # TODO #
 - [ ] Implement the Pan-Tompkins algorithm (In standby)
-- [ ] Python script to flash an ECG signal directly in the board. 
+- [V] Python script to flash an ECG signal directly in the board. 
 
 # ISSUES #
 Python package wfdb and matplotlib wasn't working fine on linux. I had to create a

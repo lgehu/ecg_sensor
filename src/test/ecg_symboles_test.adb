@@ -1,10 +1,13 @@
 with HAL.UART;
+with Interfaces;
 with System;
 with HAL; use HAL;
 with System.Storage_Elements; use System.Storage_Elements;
 with UART_USB; use UART_USB; 
-with DataTest; 
+with ECGData; 
+use type Interfaces.IEEE_Float_32;
 
+-- Testing embedding ECG signals with object linking 
 procedure Main is
    -- Déclaration des symboles générés par objcopy
   -- Symboles générés par objcopy (nom basé sur le fichier)
@@ -18,20 +21,18 @@ procedure Main is
       with Import, Address => Text_Start;
    --type Fichier_Type is array (1 .. 63) of Character;
    --pragma Pack (Fichier_Type);
-   --Fichier : Fichier_Type;
-   --for Fichier'Address use Fichier_Start;
 
    Status: HAL.UART.UART_Status;
 
 begin
-   Initialize;
-   Transmit_String ("Hello world !");
+   Initialize(115_200);
+   Transmit_String ("Beginning transfer...");
    
-  -- Transmit_String ("Start: " & Text_Start'Image);
-  -- Transmit_String (" End: " & Text_End'Image);
+   Transmit_String ("Start: " & Text_Start'Image);
+   Transmit_String (" End: " & Text_End'Image);
 
-   for I in DataTest.Data'Range loop
-      Put_Blocking (UInt9(DataTest.Data(I)), Status);
+   for I in Text_Data'Range loop
+      Put_Blocking(UInt9(I));
    end loop;
 
    loop
