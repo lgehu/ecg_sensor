@@ -6,7 +6,7 @@ with UART_USB; use UART_USB;
 with ECGData; 
 use type Interfaces.IEEE_Float_32;
 
--- Testing the python script which embbed an ECG signal into an Ada array.
+-- Testing generated ECG data by to_ada.py
 procedure Main is
 
    Status: HAL.UART.UART_Status;

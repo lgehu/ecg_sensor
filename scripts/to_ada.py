@@ -38,7 +38,7 @@ def generate_ada_array(input_file, output_file, isWFDB, symbol_name="Data"):
         if isWFDB:
             f.write(f"   Sample_Rate : constant := {int(sample_rate)};\n")
 
-        f.write(f"   Data : constant array (1 .. {len(data)}) of {array_type} := [\n")
+        f.write(f"   Data : constant array (1 .. {len(data)}) of {array_type} := (\n")
 
         # Write the binary content in Ada array form
         for idx, byte in enumerate(data, start=1):
@@ -53,7 +53,7 @@ def generate_ada_array(input_file, output_file, isWFDB, symbol_name="Data"):
             else:
                 f.write("\n")
 
-        f.write("   ];\n")
+        f.write("   );\n")
         f.write(f"   Data_Size : constant := {len(data)};\n")
         f.write(f"end {symbol_name};\n")
 

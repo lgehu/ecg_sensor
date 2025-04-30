@@ -82,8 +82,8 @@ It will generate an array of float32. Then, in the `ecg_script_test.adb`, we ite
 
 
 # TODO #
-[] Implement the Pan-Tompkins algorithm (In standby)
-[V] Python script to flash an ECG signal directly in the board. 
+- [ ] Implement the Pan-Tompkins algorithm (In standby)
+- [V] Python script to flash an ECG signal directly in the board. 
 
 # ISSUES #
 Python package wfdb and matplotlib wasn't working fine on linux. I had to create a
