@@ -12,7 +12,7 @@ procedure Ecg_Sensor is
 begin
 
    UART_USB.Initialize(115_200);
-   PanTompkins.Initialize;
+   PanTompkins.Initialize(100.0);
 
    --UART_USB.Transmit_String ("Hello");
 
