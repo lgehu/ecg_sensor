@@ -10,7 +10,6 @@ Data are transmit through UART with a python script, then, the MCU process the d
 to_ada.py: Is for converting any file to an ada array
 ## PREREQUISITES (Linux) ##
 You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
-Download the package manager for Ada (Alire):  
 ```bash
 wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip
 unzip alr-2.0.2-bin-x86_64-linux.zip
@@ -102,9 +101,10 @@ Then, execute the python script to display the result: `python3 scripts/read_ecg
 You can restart the board, it will send the data in a singleshot.  
 
 # TODO #
-- [V] Implement the Pan-Tompkins algorithm
-- [V] Python script to flash an ECG signal directly in the board. 
-- [] Enhance the algorithm using the DSP and CMSIS Library
+- [x] Implement the Pan-Tompkins algorithm
+- [x] Python script to flash an ECG signal directly in the board.
+- [ ] Make the solution with object linking working 
+- [ ] Enhance the algorithm using the DSP and CMSIS Library
 
 # ISSUES #
 Python package wfdb and matplotlib wasn't working fine on linux. I had to create a
