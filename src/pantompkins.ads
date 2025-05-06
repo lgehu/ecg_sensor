@@ -1,17 +1,14 @@
--- with HAL; use HAL;
-with Interfaces;
+with Interfaces; use Interfaces;
 
 package PanTompkins is
 
-   subtype UInt8 is Interfaces.Unsigned_8; 
-   subtype Int16 is Interfaces.Integer_16;
+   procedure Initialize (Sampling_Frequency : IEEE_Float_32);
 
-   type Filter is record
-      Coef: UInt8;
-      Last_Value: Int16;
-   end record;
+   -- Calcul the heart rate and return the data after the integration step. 
+   function Process_Sample (Sample : IEEE_Float_32) return IEEE_Float_32;
 
-   function Init_Filter(Fs: Float; Fc: Float) return Filter;
-   procedure Lowpass_Filter(F: in out Filter; Value: Int16; Result: out Int16);
+   -- Depending on the sample frequency and heart reate of the ECG, you must
+   -- skip Fs * 2 value before getting coherant value.
+   function Get_Heart_Rate return IEEE_Float_32;
 
 end PanTompkins;

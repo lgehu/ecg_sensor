@@ -1,28 +1,33 @@
-with Ada.Real_Time;
 with HAL; use HAL;
 with HAL.UART; use HAL.UART;
-with UART_USB;
-
+with UART_USB; use UART_USB;
+with ECGData;
+with Interfaces; use Interfaces; use type Interfaces.IEEE_Float_32;
 with PanTompkins; use PanTompkins;
 
 procedure Ecg_Sensor is
    Status : UART_Status;
-   ECG_Data : Int16;
-   Filter : PanTompkins.Filter;
-   LP_Result : Int16 := 0;
+   BPM : IEEE_Float_32;
+   Value : IEEE_Float_32;
 begin
 
    UART_USB.Initialize(115_200);
-   --UART_USB.Transmit_String ("Hello");
-   Filter := PanTompkins.Init_Filter (Fs => 100.0, Fc => 15.0);
+   PanTompkins.Initialize(100.0);
 
-   loop
-      ECG_Data := UART_USB.Read16(Status);
-      if Status = Ok then
-         PanTompkins.Lowpass_Filter(Filter, ECG_Data, LP_Result);     
-         UART_USB.Write16 (LP_Result, Status);
-      end if;
+   --UART_USB.Transmit_String ("Hello");
+
+   for I in ECGData.Data'Range loop
+      Value := PanTompkins.Process_Sample (ECGData.Data(I));
+      BPM := PanTompkins.Get_Heart_Rate;
+      UART_USB.Write16(Int16(Value * 1000.0), Status);
    end loop;
 
+   UART_USB.Write16 (-666, Status);
+
+  -- UART_USB.Transmit_String ("End");
+
+   loop
+      null;
+   end loop;
 
 end Ecg_Sensor;

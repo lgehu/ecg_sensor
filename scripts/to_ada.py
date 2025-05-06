@@ -38,7 +38,7 @@ def generate_ada_array(input_file, output_file, isWFDB, symbol_name="Data"):
         if isWFDB:
             f.write(f"   Sample_Rate : constant := {int(sample_rate)};\n")
 
-        f.write(f"   Data : constant array (1 .. {len(data)}) of {array_type} := [\n")
+        f.write(f"   Data : constant array (1 .. {len(data)}) of {array_type} := (\n")
 
         # Write the binary content in Ada array form
         for idx, byte in enumerate(data, start=1):
@@ -53,7 +53,7 @@ def generate_ada_array(input_file, output_file, isWFDB, symbol_name="Data"):
             else:
                 f.write("\n")
 
-        f.write("   ];\n")
+        f.write("   );\n")
         f.write(f"   Data_Size : constant := {len(data)};\n")
         f.write(f"end {symbol_name};\n")
 
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert any file into an Ada array")
 
     parser.add_argument("input", help="Input file")
-    parser.add_argument("output_dir", help="Output directory")
+    parser.add_argument("output", help="Path and filename")
     parser.add_argument("package_name", help="Package name in Ada")
 
     parser.add_argument("-w", "--wfdb", 
@@ -72,5 +72,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    output_file = args.package_name.lower() + ".ads"
-    generate_ada_array(args.input, args.output_dir + "/" + output_file, args.wfdb, args.package_name)
+    generate_ada_array(args.input, args.output, args.wfdb, args.package_name)

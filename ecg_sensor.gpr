@@ -7,18 +7,30 @@ project ECG_Sensor is
 
    Main_Name := external ("MAIN", "ecg_test");
    for Main use (Main_Name & ".adb");
-   for Languages use ("Ada");
+   for Languages use ("Ada", "C");
    for Source_Dirs use ("src/**", "config/", "");
    for Object_Dir use "obj/";
    for Create_Missing_Dirs use "True";
 
-   package Linker is
-       for Linker_Options use  ("obj/test.o");
-   end Linker;
+   -- package Compiler renames nucleo_f446re.Compiler;
+   
+  package Compiler is
+      for Default_Switches ("C") use (
+         "-mcpu=cortex-m4",
+         "-mfloat-abi=hard",
+         "-mfpu=fpv4-sp-d16",
+         "-I../CMSIS/DSP/Include",
+         "-I../CMSIS/Core/Include",
+         "-I../CMSIS/Include"
+      );
+   end Compiler;
+
+  -- package Linker is
+  --     for Linker_Options use  ("obj/test.o");
+  -- end Linker;
    -- for Objects_Linked use ("obj/test.o");
    -- for Linker_Switches use ("obj/test.o");
 
-   package Compiler renames nucleo_f446re.Compiler;
 
    package Ide is
       for Program_Host use "localhost:4242";
