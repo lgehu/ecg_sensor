@@ -62,7 +62,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert any file into an Ada array")
 
     parser.add_argument("input", help="Input file")
-    parser.add_argument("output_dir", help="Output directory")
+    parser.add_argument("output", help="Path and filename")
     parser.add_argument("package_name", help="Package name in Ada")
 
     parser.add_argument("-w", "--wfdb", 
@@ -72,5 +72,4 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    output_file = args.package_name.lower() + ".ads"
-    generate_ada_array(args.input, args.output_dir + "/" + output_file, args.wfdb, args.package_name)
+    generate_ada_array(args.input, args.output, args.wfdb, args.package_name)
