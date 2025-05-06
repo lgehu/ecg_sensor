@@ -3,32 +3,33 @@ The goal is to virtualize a sensor in the STM32F446RE that can process ECG data 
 Data are transmit through UART with a python script, then, the MCU process the data in real time and should return the heart rate.
 
 ## SCRIPTS ## 
-uart_test.py: Is intented for testing the UART and transmist signed integer on 16 bits. <br/>
-filters_proto.py: Is for testing algorithm of filter to be implemented on Ada. <br/>
-ecg_uart_test.py: Is for sending a whole ECG signal. 
-
+- uart_test.py: Is intented for testing the UART and transmist signed integer on 16 bits.  
+- filters_proto.py: Is for testing algorithm of filter to be implemented on Ada.  
+- read_ecg_sensor.py: Read an ECG signal from the board and display it 
+- ecg_uart_test.py: Is for sending a whole ECG signal. 
+to_ada.py: Is for converting any file to an ada array
 ## PREREQUISITES (Linux) ##
-You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).<br/>
-Download the package manager for Ada (Alire): <\br>
+You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
+Download the package manager for Ada (Alire):  
 ```bash
 wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip
 unzip alr-2.0.2-bin-x86_64-linux.zip
 mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
 alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1
 ```
-Then, download the ADL fork for Alire beside this project: <br/>
+Then, download the ADL fork for Alire beside this project:   
 ```bash
 git clone https://github.com/lgehu/alr_adl_crates.git
 ```
-Your_folder <br/>
-│ </br>
-├── ecg_sensor <br/>
-├── alr_adl_crates
+Your_folder   
+│  
+├── ecg_sensor  
+├── alr_adl_crates  
     
 ## COMPILATION ##
-Plug your device to your computer, then to compile the Ada project run: <br/>
+Plug your device to your computer, then to compile the Ada project run:   
 `make PRJ_NAME=ecg_test`
-You can replace 'ecg_test' with an other file in the src/test folder.<br/>
+You can replace 'ecg_test' with an other file in the src/test folder.  
 You should change in the makefile the port of your device if needed.
 
 ## Flashing an ECG file to the board ## 
@@ -75,7 +76,7 @@ Once the exernal file linked, the addresses Text_Start and Text_End in the Ada p
 In the script folder, the file to_ada.py take an arbitrary file and generate an array of bytes in the Ada syntax. This way, we can embbed any data during the compilation.
 The script can be used like this:
 ```bash 
-python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ [Package_Name] --wfdb
+python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ecgdata.ads ECGData --wfdb
 ```
 Execution of the script that allows to convert a .dat dataset into a Ada spec file [Package name]. For our example we used ECGData.
 It will generate an array of float32. Then, in the `ecg_script_test.adb`, we iterate through the array, convert it to Int16 and send it using UART at a given sample rate.
@@ -95,7 +96,7 @@ However, amplitude are different because lowpass and highpass are IIR functions 
 
 ## How to use
 Here is the following script and command we used to get the precedent results.  
-First, transform an ECG signal into an ada array: `python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ ECGData --wfdb`  
+First, transform an ECG signal into an ada array: `python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ecgdata.ads ECGData --wfdb`  
 Next, compile the program and flash it: `make PRJ_NAME=ecg_test`  
 If you only want the raw data outputted by the board, use: `make PRJ_NAME=ecg_script_test`  
 It will send the raw signal casted to Int16 through UART.  
@@ -109,8 +110,8 @@ You can restart the board, it will send the data in a singleshot.
 
 # ISSUES #
 Python package wfdb and matplotlib wasn't working fine on linux. I had to create a
-pyenv: <br/>
-`python3 -m venv` <br/>
+pyenv:   
+`python3 -m venv`   
 `source ecg_sensor/bin/activate`
-Then, <br/>
+Then,   
 `pip install wfdb matplotlib pystruct pyserial`
