@@ -94,8 +94,9 @@ On the following pictures, we can see on the left the processed signal by the bo
 
 # TODO #
 - [V] Implement the Pan-Tompkins algorithm
-- [V] Python script to flash an ECG signal directly in the board. 
-- [] Enhance the algorithm using the DSP and CMSIS Library
+- [V] Python script to flash an ECG signal directly in the board.
+- [ ] Make the solution with object linking working 
+- [ ] Enhance the algorithm using the DSP and CMSIS Library
 
 # ISSUES #
 Python package wfdb and matplotlib wasn't working fine on linux. I had to create a
