@@ -1,0 +1,3 @@
+[submodule "Pan-Tompkins-python"]
+	path = Pan-Tompkins-python
+	url = git@github.com:lgehu/Pan-Tompkins-algorithm-python.git
