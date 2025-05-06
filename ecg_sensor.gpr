@@ -25,9 +25,9 @@ project ECG_Sensor is
       );
    end Compiler;
 
-   package Linker is
-       for Linker_Options use  ("obj/test.o");
-   end Linker;
+  -- package Linker is
+  --     for Linker_Options use  ("obj/test.o");
+  -- end Linker;
    -- for Objects_Linked use ("obj/test.o");
    -- for Linker_Switches use ("obj/test.o");
 
