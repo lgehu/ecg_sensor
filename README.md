@@ -75,8 +75,9 @@ Once the exernal file linked, the addresses Text_Start and Text_End in the Ada p
 In the script folder, the file to_ada.py take an arbitrary file and generate an array of bytes in the Ada syntax. This way, we can embbed any data during the compilation.
 The script can be used like this:
 ```bash 
-python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ ECGData --wfdb
+python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ [Package_Name] --wfdb
 ```
+Execution of the script that allows to convert a .dat dataset into a Ada spec file [Package name]. For our example we used ECGData.
 It will generate an array of float32. Then, in the `ecg_script_test.adb`, we iterate through the array, convert it to Int16 and send it using UART at a given sample rate.
 `read_ecg_sensor.py` will acquire data and convert it back to float.
 
