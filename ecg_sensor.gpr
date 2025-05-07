@@ -14,6 +14,7 @@ project ECG_Sensor is
 
    -- package Compiler renames nucleo_f446re.Compiler;
    
+
   package Compiler is
       for Default_Switches ("C") use (
          "-mcpu=cortex-m4",
@@ -22,6 +23,10 @@ project ECG_Sensor is
          "-I../CMSIS/DSP/Include",
          "-I../CMSIS/Core/Include",
          "-I../CMSIS/Include"
+      );
+
+      for Default_Switches ("Ada") use (
+         "-O2"
       );
    end Compiler;
 
