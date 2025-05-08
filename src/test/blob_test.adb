@@ -3,7 +3,7 @@ with Interfaces;
 with System;
 with HAL; use HAL;
 with UART_USB; use UART_USB; 
-with ECGData; 
+with AdaData; 
 use type Interfaces.IEEE_Float_32;
 
 -- Testing generated ECG data by to_ada.py
@@ -21,9 +21,9 @@ begin
    Initialize(115_200);
    Transmit_String ("Beginning transfer...");
 
-   for I in ECGData.Data'Range loop
-      UART_USB.Write16(To_Int16(ECGData.Data(I)), Status);
-      delay 1.0 / ECGData.Sample_Rate;
+   for I in 1 .. AdaData.Data_Size loop
+      UART_USB.Transmit_String(AdaData.Data(I)'Image & ASCII.LF & ASCII.CR);
+      -- UART_USB.Write16(UART_USB.Int16(I), Status);
    end loop;
 
    loop

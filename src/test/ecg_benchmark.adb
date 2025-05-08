@@ -18,11 +18,12 @@ procedure Main is
 begin
    UART_USB.Initialize(115_200);
    PanTompkins.Initialize (100.0);
+   UART_USB.Transmit_String("Data adress:" & ECGData.Data'Address'Image & ASCII.LF & ASCII.CR);
 
    loop
-      for I of ECGData.Data loop
+      for I in ECGData.Data'Range loop
          Start_Time := Clock;
-         Result := PanTompkins.Process_Sample (I);
+         Result := PanTompkins.Process_Sample (ECGData.Data(I));
          Elapsed_Time := To_Duration(Clock - Start_Time) * 1_000.0;
          UART_USB.Transmit_String (Elapsed_Time'Image & " ms" & ASCII.LF & ASCII.CR);
       end loop;

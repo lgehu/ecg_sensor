@@ -10,6 +10,7 @@ project ECG_Sensor is
    for Languages use ("Ada", "C");
    for Source_Dirs use ("src/**", "config/", "");
    for Object_Dir use "obj/";
+   for Exec_Dir use "bin";
    for Create_Missing_Dirs use "True";
 
    -- package Compiler renames nucleo_f446re.Compiler;
@@ -26,8 +27,13 @@ project ECG_Sensor is
       );
 
       for Default_Switches ("Ada") use (
-         "-O2"
+         "-O2",
+         "-gnat2022",
+         "-T", "linker/linker_script.ld"
       );
+
+      -- for Linker_Switches use ("-T", "linker/linker_script.ld");
+
    end Compiler;
 
   -- package Linker is
