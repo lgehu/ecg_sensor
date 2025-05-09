@@ -79,7 +79,9 @@ python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/0000
 ```
 Execution of the script that allows to convert a .dat dataset into a Ada spec file [Package name]. For our example we used ECGData.
 It will generate an array of float32. Then, in the `ecg_script_test.adb`, we iterate through the array, convert it to Int16 and send it using UART at a given sample rate.
-`read_ecg_sensor.py` will acquire data and convert it back to float.
+`read_ecg_sensor.py` will acquire data and convert it back to float.  
+
+This solution has now his own [repo](https://github.com/lgehu/adablob/tree/master). This allow to compile and flash data one time to a specific address/sector of the board. Be carefull that flashing your project can overwrite all your data if your program overloap on the same sector of your data. 
 
 # Pan-Tompkins
 We implemented the Pan-Tompkins algorithm on the STM32F446RE. According to the paper, it filter the input data with a pass-band from 5 Hz to 15 Hz. Currently, its a simple IIR filter, but we could enhance it by using the DSP  and CMSIS library to implement a butterworth in some future. Then, it square the signal and perform a moving window to smooth the signal. Finally, to detect the pick, it compute one threshold based on the average amplitude, and the second treshold is a minimal distance between picks.
