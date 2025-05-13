@@ -105,7 +105,7 @@ You can restart the board, it will send the data in a singleshot.
 # TODO #
 - [x] Implement the Pan-Tompkins algorithm
 - [x] Python script to flash an ECG signal directly in the board.
-- [ ] Make the solution with object linking working 
+- [x] Make the solution with object linking working 
 - [ ] Enhance the algorithm using the DSP and CMSIS Library
 
 # ISSUES #
