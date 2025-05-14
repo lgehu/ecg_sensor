@@ -92,7 +92,8 @@ On the following picture, the first one is an ECG signal processed by the python
 ![python-algo](https://github.com/user-attachments/assets/b64c858f-ec68-40bc-9dfc-82cd7c9bac8a)  
 The next one is the same ECG signal processed by the Ada implementation. We can see similar results: No false positive, same picks number and detected on the same time.
 However, amplitude are different because lowpass and highpass are IIR functions instead of butterworth. Thus, gain response are not the same. 
-![ada-algo](https://github.com/user-attachments/assets/8a5ad799-4a83-48e4-911f-79fcc074056d)  
+![ada-algo](https://github.com/user-attachments/assets/8a5ad799-4a83-48e4-911f-79fcc074056d)
+The algorithm has an constant delay of 32 us per sample processed. With compilation optimization (-02), It can go up to 8 us.
 ## How to use
 Here is the following script and command we used to get the precedent results.  
 First, transform an ECG signal into an ada array: `python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ecgdata.ads ECGData --wfdb`  
