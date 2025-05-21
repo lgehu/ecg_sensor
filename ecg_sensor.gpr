@@ -1,5 +1,5 @@
 with "config/ecg_sensor_config.gpr";
-with "../alr_adl_crates/nucleo_f446re/nucleo_f446re.gpr";
+with "nucleo_f446re.gpr";
 
 project ECG_Sensor is
    for Runtime ("Ada") use nucleo_f446re'Runtime ("Ada");
