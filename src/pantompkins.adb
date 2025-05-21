@@ -9,6 +9,7 @@ package body PanTompkins is
 
    -- Sampling frequency
    Fs : IEEE_Float_32 := 100.0;
+   Parameters : Config;
 
    -- Derived sizes
    Window_Size     : Natural;
@@ -32,11 +33,12 @@ package body PanTompkins is
    Last_Peak_Sample : Natural := 0;
    Heart_Rate       : IEEE_Float_32 := 0.0;
 
-   procedure Initialize (Sampling_Frequency : IEEE_Float_32) is
+   procedure Initialize (Param : Config) is
    begin
-      Fs := Sampling_Frequency;
-      Window_Size  := Natural(Fs * Default_Window_Sec);
-      Min_Distance := Natural(Fs * Default_Min_RR_Sec);
+      Parameters := Param;
+      Fs := Param.Sampling_Frequency;
+      Window_Size  := Natural(Fs * Param.Window_Sec);
+      Min_Distance := Natural(Fs * Param.Minimal_Pick_Distance_Sec);
       Squared_Buffer := new Buffer(0 .. Window_Size - 1);
       Raw_Buffer := (others => 0.0);
       Deriv_Buffer := (others => 0.0);
@@ -93,10 +95,22 @@ package body PanTompkins is
       Raw_Buffer := Raw_Buffer(1 .. 4) & Sample;
       Filtered := High_Pass(Low_Pass);
 
+      if Parameters.Output_Stage = Stage_Filtered then
+         return Filtered;
+      end if;
+
       Deriv_Buffer := Deriv_Buffer(1 .. 3) & Filtered;
       Deriv := Derivative;
 
+      if Parameters.Output_Stage = Stage_Derivatived then
+         return Deriv;
+      end if;
+
       Squared := Deriv * Deriv;
+
+      if Parameters.Output_Stage = Stage_Squared then
+         return Squared;
+      end if;
 
       for I in 0 .. Window_Size - 2 loop
          Squared_Buffer(I) := Squared_Buffer(I + 1);
@@ -110,7 +124,11 @@ package body PanTompkins is
 
       Integrated := Integrated / IEEE_Float_32(Squared_Buffer'Length);
 
-      Threshold := Integrated * 1.5;
+      if Parameters.Output_Stage = Stage_Integrated then
+         return Integrated;
+      end if;
+
+      Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
 
       if Squared > Threshold and then (Sample_Index - Last_Peak_Sample > Min_Distance) then
          if Last_Peak_Sample > 0 then
@@ -125,7 +143,8 @@ package body PanTompkins is
       end if;
 
       Sample_Index := Sample_Index + 1;
-      return Integrated;
+
+      return Heart_Rate;
    end Process_Sample;
 
    function Get_Heart_Rate return IEEE_Float_32 is
