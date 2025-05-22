@@ -13,6 +13,8 @@ package UART_USB is
      Ada.Strings.Bounded.Generic_Bounded_Length (Max => 128);
    use B_Str;
 
+   subtype UART_String is B_Str.Bounded_String;
+
    procedure Initialize(Baudrate: Baud_Rates := 9600);
 
    procedure Read_Blocking
@@ -32,7 +34,7 @@ package UART_USB is
 
    function Receive_String (
       Delimiter: Character := ASCII.NUL;
-      Timeout : Time_Span := Seconds (1)) return Bounded_String;
+      Timeout : Time_Span := Seconds (1)) return UART_String;
 
 
 end UART_USB;

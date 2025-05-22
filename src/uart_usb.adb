@@ -79,9 +79,9 @@ package body UART_USB is
 
    function Receive_String 
       (Delimiter: Character := ASCII.NUL;
-      Timeout : Time_Span := Seconds (1)) return Bounded_String is
+      Timeout : Time_Span := Seconds (1)) return UART_String is
    Data : UInt9;
-   Str: Bounded_String := Null_Bounded_String;
+   Str: UART_String := Null_Bounded_String;
    Status: UART_Status := Ok;
    begin
       loop

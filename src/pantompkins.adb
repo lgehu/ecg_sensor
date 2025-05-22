@@ -33,7 +33,7 @@ package body PanTompkins is
    Last_Peak_Sample : Natural := 0;
    Heart_Rate       : IEEE_Float_32 := 0.0;
 
-   procedure Initialize (Param : Config) is
+   procedure Initialize (Param : Config := (others => <>)) is
    begin
       Parameters := Param;
       Fs := Param.Sampling_Frequency;

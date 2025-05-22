@@ -16,7 +16,7 @@ package PanTompkins is
       Output_Stage : Stage := Stage_Integrated;
    end record;
 
-   procedure Initialize (Param : Config);
+   procedure Initialize (Param : Config := (others => <>));
 
    -- Calcul the heart rate and return the data after the integration step. 
    function Process_Sample (Sample : IEEE_Float_32) return IEEE_Float_32;
