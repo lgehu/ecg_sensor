@@ -15,8 +15,8 @@ procedure Ecg_Sensor is
    ECG_VERSION : constant String := "0.1";
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
-
-   type Commands is (START, STOP, PAUSE, VERSION, GET_PARAM);
+   type Sensor_State is (INIT, SAMPLING, PAUSED);
+   type Commands is (START, STOP, PAUSE, RESUME, VERSION, GET_PARAM, STATE);
    type Parameters_Type is (SAMPLE_MODE, SAMPLE_RATE, OUTPUT_STAGE, AMPLITUDE_COEF, PICK_DISTANCE, WINDOW_SEC);
 
    type Parameters_Array is array (Natural range <>) of IEEE_Float_32;
@@ -87,6 +87,7 @@ procedure Ecg_Sensor is
                when GET_PARAM => Print_Param;
                when others => UART_USB.Transmit_String ("Unknown command" & CMD_END);
             end case;
+         
          -- Parameter
          else 
             begin
@@ -112,6 +113,8 @@ procedure Ecg_Sensor is
    Mode   : Sampling_Mode;
    Status : UART_Status;
    Config : PanTompkins.Config;
+   ECG_State  : Sensor_State; 
+   Param : PanTompkins.Config := (others => <>);
 
 begin
 
@@ -120,15 +123,27 @@ begin
       UART_USB.Transmit_String ("ECG_SENSOR v0.1");
 
       Set_Default_Parameters;
-      Config := Read_Param;
-      PanTompkins.Initialize;
 
-      for I in AdaData.Data'Range loop
-         Result := PanTompkins.Process_Sample (AdaData.Data(I));
-         UART_USB.Write16(Int16(Result * 1000.0), Status);
+      loop
+
+         case ECG_State is
+            when INIT =>
+               Config := Read_Param;
+               PanTompkins.Initialize (Config);
+            when SAMPLING =>
+               for I in AdaData.Data'Range loop
+                  -- Read commands
+                  Result := PanTompkins.Process_Sample (AdaData.Data(I));
+                  UART_USB.Transmit_String(Int16(IEEE_Float_32'Max(IEEE_Float_32'Min(Result * 1000.0, 2.0**15 - 1.0), -2.0**15))'Image);
+               end loop;
+            when others =>
+
+               null; 
+
+         end case;
+
       end loop;
 
-      UART_USB.Write16 (666, Status);
    exception -- Unknows Errors (if UART is working..)
       when C : Constraint_Error =>
          UART_USB.Transmit_String (Exception_Message (C));

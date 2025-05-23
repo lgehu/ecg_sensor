@@ -1,12 +1,11 @@
 with Ada.Numerics.Elementary_Functions;
+with UART_USB;
+with Ada.Exceptions; use Ada.Exceptions;
 
 package body PanTompkins is
 
-   -- Constants
-   Default_Window_Sec : constant IEEE_Float_32 := 0.3;   -- 300 ms
-   Default_Min_RR_Sec : constant IEEE_Float_32 := 0.4;   -- 400 ms
    RR_FIFO_Size       : constant := 10;                  -- Size of RR interval FIFO
-
+ 
    -- Sampling frequency
    Fs : IEEE_Float_32 := 100.0;
    Parameters : Config;
@@ -39,6 +38,9 @@ package body PanTompkins is
       Fs := Param.Sampling_Frequency;
       Window_Size  := Natural(Fs * Param.Window_Sec);
       Min_Distance := Natural(Fs * Param.Minimal_Pick_Distance_Sec);
+
+      UART_USB.Transmit_String (Param'Image);
+
       Squared_Buffer := new Buffer(0 .. Window_Size - 1);
       Raw_Buffer := (others => 0.0);
       Deriv_Buffer := (others => 0.0);
@@ -91,9 +93,12 @@ package body PanTompkins is
       Integrated : IEEE_Float_32 := 0.0;
       Threshold  : IEEE_Float_32;
    begin
+
+
       -- Shift buffers
       Raw_Buffer := Raw_Buffer(1 .. 4) & Sample;
       Filtered := High_Pass(Low_Pass);
+
 
       if Parameters.Output_Stage = Stage_Filtered then
          return Filtered;

@@ -5,22 +5,14 @@ with Ada.Exceptions; use Ada.Exceptions;
 
 with UART_USB; use UART_USB;
 
+
+-- Map seems to not work
 procedure Map_Test is
-
-   package Integer_Hashed_Maps is new
-     Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => String,
-        Element_Type    => Integer,
-        Hash            => Ada.Strings.Hash,
-        Equivalent_Keys => "=");
-
-   use Integer_Hashed_Maps;
 
    M : Map;
 
 begin
    UART_USB.Initialize (115_200);
-   UART_USB.Transmit_String ("Tu vas marcher oui !? ");
 
    begin
       M.Insert ("test", 31);
