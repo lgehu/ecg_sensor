@@ -24,13 +24,12 @@ package Commands_Interpreter is
       Value     : Cmd_Str; -- Current stored value
    end record;
 
+   -- Generic parameter or action builder
    generic
       type T (<>) is private;
       Key : String;
       Default_Value : T;
-      Cmd_Type : Command_Type;
       Is_Valid : access function (Input : String) return Boolean;
-      --with function Is_Valid (Input : String) return Boolean;
    package Arg_Accessor is
 
       Arg_Index : Natural := 0;
@@ -45,13 +44,15 @@ package Commands_Interpreter is
 
       function Get_Raw return Cmd_Str;
 
+      function Get_Default return T;
+
    end Arg_Accessor;
 
+   -- Create a parameter for discrete type (Works also with Enumeration)
    generic
       type T is (<>);
       Key : String;
       Default_Value : T;
-      Cmd_Type : Command_Type;
    package Discrete_Accessor is 
    
       function Is_Valid (Input : String) return Boolean;
@@ -59,7 +60,7 @@ package Commands_Interpreter is
       package Accessor is new Arg_Accessor (T => T, 
                                            Key => Key,
                                            Default_Value => Default_Value, 
-                                           Cmd_Type => Cmd_Type, Is_Valid => Is_Valid'Access
+                                           Cmd_Type => PARAMETER, Is_Valid => Is_Valid'Access
                                            );
       use Accessor;
 
@@ -69,11 +70,11 @@ package Commands_Interpreter is
 
    end Discrete_Accessor;
 
+   -- Create a parameter for real type
    generic
       type T is digits <>;
       Key : String;
       Default_Value : T;
-      Cmd_Type : Command_Type;
    package Real_Accessor is 
 
       function Is_Valid (Input : String) return Boolean;
@@ -81,7 +82,7 @@ package Commands_Interpreter is
       package Accessor is new Arg_Accessor (T => T, 
          Key => Key, 
          Default_Value => Default_Value, 
-         Cmd_Type => Cmd_Type, Is_Valid => Is_Valid'Access);
+         Cmd_Type => PARAMETER, Is_Valid => Is_Valid'Access);
       use Accessor;
 
       procedure Register;

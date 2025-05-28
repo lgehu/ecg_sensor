@@ -34,9 +34,15 @@ package body Commands_Interpreter is
 
       Dummy := Find_Arg (Command_String.To_String (Arg.Key), Arg_Index);
       
-      -- Update value only if the format is valid
-      if Check_Pool (Arg_Index) (Command_String.To_String (Arg.Value)) then
-         Arg_Pool (Arg_Index).Value := Arg.Value;
+      if Arg.Cmd_Type = PARAMETER then
+         -- Update value only if the format is valid
+         if Check_Pool (Arg_Index) (Command_String.To_String (Arg.Value)) then
+            Arg_Pool (Arg_Index).Value := Arg.Value;
+         end if;
+      else -- Perform an action
+         if Check_Pool (Arg_Index) (Command_String.To_String (Arg.Value)) then
+            null;
+         end if;
       end if;
       
       return Arg;
@@ -79,7 +85,7 @@ package body Commands_Interpreter is
       begin
 
          if Arg_Len + 1 > Max_Arg then 
-            raise Commands_Exception with "Maximum arg reached";
+            raise Commands_Exception with "Maximum argument reached";
          elsif Exist then
             raise Commands_Exception with "This argument already exist";
          else
@@ -111,6 +117,11 @@ package body Commands_Interpreter is
          Check_Registered;
          return Arg_Pool (Arg_Index).Value;
       end Get_Raw;
+
+      function Get_Default return T is
+      begin
+         return Default_Value;
+      end Get_Default;
 
    end Arg_Accessor;
 

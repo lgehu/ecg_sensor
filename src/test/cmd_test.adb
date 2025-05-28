@@ -8,16 +8,21 @@ with UART_USB; use UART_USB;
 
 procedure Cmd_Test is
 
+   type State is (BUSY, WAITING, PAUSED);
+
    package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Integer,
                Key            => "SAMPLE_RATE",
-               Default_Value  => 100,
-               Cmd_Type       => Commands_Interpreter.PARAMETER
+               Default_Value  => 100
+            );
+
+   package Sensor_State is new Commands_Interpreter.Discrete_Accessor (T => State,
+               Key            => "SENSOR_STATE",
+               Default_Value  => WAITING
             );
 
    package Amplitude_Coef is new Commands_Interpreter.Real_Accessor (T => Float,
                Key            => "AMPLITUDE_COEF",
-               Default_Value  => 1.5,
-               Cmd_Type       => Commands_Interpreter.PARAMETER
+               Default_Value  => 1.5
             );
 
    Arg : Commands_Interpreter.Argument;
@@ -30,6 +35,7 @@ begin
       
       Sample_Rate.Register;
       Amplitude_Coef.Register;
+      Sensor_State.Register;
 
       loop 
          Input := UART_USB.Receive_String (ASCII.Semicolon, Time_Span_Last);
@@ -37,6 +43,7 @@ begin
          
          UART_USB.Transmit_String (Sample_Rate.Accessor.Get_Arg'Image & ASCII.LF & ASCII.CR);
          UART_USB.Transmit_String (Amplitude_Coef.Accessor.Get_Arg'Image & ASCII.LF & ASCII.CR);
+         UART_USB.Transmit_String (Sensor_State.Accessor.Get_Arg'Image & ASCII.LF & ASCII.CR);
 
       end loop;
    exception
