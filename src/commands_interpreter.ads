@@ -27,6 +27,8 @@ package Commands_Interpreter is
       Key : String;
       Default_Value : T;
       Cmd_Type : Command_Type;
+      Is_Valid : access function (Input : String) return Boolean;
+      --with function Is_Valid (Input : String) return Boolean;
    package Arg_Accessor is
 
       Arg_Index : Natural := 0;
@@ -53,7 +55,7 @@ package Commands_Interpreter is
       package Accessor is new Arg_Accessor (T => T, 
                                            Key => Key,
                                            Default_Value => Default_Value, 
-                                           Cmd_Type => Cmd_Type
+                                           Cmd_Type => Cmd_Type, Is_Valid => Is_Valid'Access
                                            );
       use Accessor;
 
@@ -73,7 +75,7 @@ package Commands_Interpreter is
       package Accessor is new Arg_Accessor (T => T, 
          Key => Key, 
          Default_Value => Default_Value, 
-         Cmd_Type => Cmd_Type);
+         Cmd_Type => Cmd_Type, Is_Valid => Is_Valid'Access);
       use Accessor;
 
       procedure Register;

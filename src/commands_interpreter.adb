@@ -80,7 +80,7 @@ package body Commands_Interpreter is
                                     Value    => Command_String.To_Bounded_String (Default_Value'Image),
                                     Cmd_Type => Cmd_Type);
 
-           -- Check_Pool (Arg_Len) := Valider'Access;
+           Check_Pool (Arg_Len) := Is_Valid;
           -- UART_USB.Transmit_String (Arg_Index'Image & " " & Arg_Len'Image);
 
          else
@@ -154,7 +154,7 @@ package body Commands_Interpreter is
       procedure Register is
       begin
          Accessor.Register;
-         Check_Pool (Arg_Len) := Is_Valid'Access;
+         --Check_Pool (Arg_Len) := Is_Valid'Access;
       end Register;
       
       function Get_Value return T is
