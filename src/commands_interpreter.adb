@@ -9,9 +9,9 @@ package body Commands_Interpreter is
 
    type Arg_Array is array (Positive range <>) of Argument;
 
-   type Check_Array is array (1 .. 100) of access function (Input : String) return Boolean;
+   type Check_Array is array (1 .. Max_Arg) of access function (Input : String) return Boolean;
 
-   Arg_Pool : Arg_Array(1 .. 100);
+   Arg_Pool : Arg_Array(1 .. Max_Arg);
    Check_Pool : Check_Array;
 
    Arg_Len : Natural := 0;
@@ -77,19 +77,19 @@ package body Commands_Interpreter is
 
       procedure Register is
       begin
-         if not Exist then
 
+         if Arg_Len + 1 > Max_Arg then 
+            raise Commands_Exception with "Maximum arg reached";
+         elsif Exist then
+            raise Commands_Exception with "This argument already exist";
+         else
             Arg_Len := Arg_Len + 1;
             Arg_Index := Arg_Len;
             Arg_Pool(Arg_Len) :=  (Key     => Command_String.To_Bounded_String (Key),
                                     Value    => Command_String.To_Bounded_String (Default_Value'Image),
                                     Cmd_Type => Cmd_Type);
 
-           Check_Pool (Arg_Len) := Check'Access;
-          -- UART_USB.Transmit_String (Arg_Index'Image & " " & Arg_Len'Image);
-
-         else
-            raise Commands_Exception with "This argument already exist";
+            Check_Pool (Arg_Len) := Check'Access;
          end if;
 
       end Register;

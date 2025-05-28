@@ -4,6 +4,8 @@ with Interfaces;
 
 package Commands_Interpreter is
 
+   Max_Arg : constant Positive := 100;
+
    Commands_Exception : exception; 
 
    package Command_String is new
