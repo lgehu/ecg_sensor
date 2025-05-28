@@ -7,9 +7,7 @@ with Ada.Numerics;
 
 package body Commands_Interpreter is
 
-   type Arg_Array is array (Positive range <>) of Argument;
-
-   type Check_Array is array (1 .. Max_Arg) of access function (Input : String) return Boolean;
+   type Check_Array is array (1 .. Max_Arg) of access function (Input : Argument) return Boolean;
 
    Arg_Pool : Arg_Array(1 .. Max_Arg);
    Check_Pool : Check_Array;
@@ -22,6 +20,11 @@ package body Commands_Interpreter is
       Arg, Dummy : Argument;
       Arg_Index : Natural := 0;
    begin
+      
+      if Input = "" then
+         raise Commands_Exception with "Invalid command";
+      end if;
+
       if Equal_Pos = 0 then
          Arg.Cmd_Type := ACTION;
          Arg.Key := Bounded_Input;
@@ -36,11 +39,11 @@ package body Commands_Interpreter is
       
       if Arg.Cmd_Type = PARAMETER then
          -- Update value only if the format is valid
-         if Check_Pool (Arg_Index) (Command_String.To_String (Arg.Value)) then
+         if Check_Pool (Arg_Index) (Arg) then
             Arg_Pool (Arg_Index).Value := Arg.Value;
          end if;
       else -- Perform an action
-         if Check_Pool (Arg_Index) (Command_String.To_String (Arg.Value)) then
+         if Check_Pool (Arg_Index) (Arg) then
             null;
          end if;
       end if;
@@ -59,12 +62,11 @@ package body Commands_Interpreter is
       raise Commands_Exception with "Argument not found";
    end Find_Arg;
 
-
    package body Arg_Accessor is
       
       use Commands_Interpreter;
 
-      function Check (Input : String) return Boolean is
+      function Check (Input : Argument) return Boolean is
       begin
          return Is_Valid (Input);
       end Check;
@@ -127,11 +129,11 @@ package body Commands_Interpreter is
 
    package body Discrete_Accessor is
 
-      function Is_Valid (Input : String) return Boolean is
+      function Is_Valid (Input : Argument) return Boolean is
       Dummy : T;
       begin
          begin
-            Dummy := T'Value (Input);
+            Dummy := T'Value (Command_String.To_String (Input.Value));
             return true;
          exception
             when C : Constraint_Error =>
@@ -154,11 +156,11 @@ package body Commands_Interpreter is
 
    package body Real_Accessor is
 
-      function Is_Valid (Input : String) return Boolean is
+      function Is_Valid (Input : Argument) return Boolean is
       Dummy : T;
       begin
          begin
-            Dummy := T'Value (Input);
+            Dummy := T'Value (Command_String.To_String (Input.Value));
             return true;
          exception
             when C : Constraint_Error =>
@@ -189,5 +191,23 @@ package body Commands_Interpreter is
       end Real_Is_Valid;
       
    end Real_Accessor;
+
+   package body Action_Accessor is 
+
+      procedure Register is 
+      begin
+         Accessor.Register;
+      end;
+
+   end Action_Accessor;
+
+   function Get_Args return Arg_Array is
+   begin
+      if Arg_Len = 0 then
+         return (1 .. 0 => <>); -- tableau vide
+      else
+         return Arg_Pool (1 .. Arg_Len);
+      end if;
+   end;
 
 end Commands_Interpreter;
