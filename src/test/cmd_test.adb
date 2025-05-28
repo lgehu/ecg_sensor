@@ -1,37 +1,49 @@
 with Ada.Real_Time; use Ada.Real_Time;
-
+with Ada.Exceptions; use Ada.Exceptions;
+with AdaData;
 with Commands_Interpreter;
 
 with Interfaces;
 with UART_USB; use UART_USB;
 
 procedure Cmd_Test is
-   Input : UART_USB.UART_String;
-   Cmd : Commands_Interpreter.Command; 
 
-   package Cmd_Str renames Commands_Interpreter.Command_String;
-
-   package Sample_Rate is new Commands_Interpreter.Arg_Desc
-            (T         => Integer,
-               Name    => Cmd_Str.To_Bounded_String ("SAMPLE_RATE"),
-               Default => Cmd_Str.To_Bounded_String ("100"),
-               C_Type  => Commands_Interpreter.PARAMETER
+   package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Integer,
+               Key            => "SAMPLE_RATE",
+               Default_Value  => 100,
+               Cmd_Type       => Commands_Interpreter.PARAMETER
             );
 
+   package Amplitude_Coef is new Commands_Interpreter.Real_Accessor (T => Float,
+               Key            => "AMPLITUDE_COEF",
+               Default_Value  => 1.5,
+               Cmd_Type       => Commands_Interpreter.PARAMETER
+            );
+
+   Arg : Commands_Interpreter.Argument;
+   Input : UART_String;
+
 begin
-   UART_USB.Initialize (115_200);
+   begin
+      UART_USB.Initialize (115_200);
+      UART_USB.Transmit_String ("Argument interpreter" & ASCII.LF & ASCII.CR);
+      
+      Sample_Rate.Register;
+      Amplitude_Coef.Register;
 
-   loop 
-      Input := UART_USB.Receive_String (ASCII.Semicolon, Time_Span_Last);
-      Cmd := Commands_Interpreter.Parse (B_Str.To_String (Input));
+      loop 
+         Input := UART_USB.Receive_String (ASCII.Semicolon, Time_Span_Last);
+         Arg := Commands_Interpreter.Parse (B_Str.To_String (Input));
+         
+         UART_USB.Transmit_String (Sample_Rate.Accessor.Get_Arg'Image & ASCII.LF & ASCII.CR);
+         UART_USB.Transmit_String (Amplitude_Coef.Accessor.Get_Arg'Image & ASCII.LF & ASCII.CR);
 
-      declare
-         Value : Float;
-      begin
-         Value := Commands_Interpreter.Get_Value (Cmd, 0.69);
-         UART_USB.Transmit_String (Value'Image);
-      end;
-
-   end loop;
+      end loop;
+   exception
+      when E : Commands_Interpreter.Commands_Exception =>
+            UART_USB.Transmit_String (Exception_Message (E));
+      when C : Constraint_Error =>
+            UART_USB.Transmit_String (Exception_Message (C)); 
+   end;
 
 end Cmd_Test;
