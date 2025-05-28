@@ -52,6 +52,8 @@ package Commands_Interpreter is
       Cmd_Type : Command_Type;
    package Discrete_Accessor is 
    
+      function Is_Valid (Input : String) return Boolean;
+
       package Accessor is new Arg_Accessor (T => T, 
                                            Key => Key,
                                            Default_Value => Default_Value, 
@@ -71,6 +73,8 @@ package Commands_Interpreter is
       Default_Value : T;
       Cmd_Type : Command_Type;
    package Real_Accessor is 
+
+      function Is_Valid (Input : String) return Boolean;
 
       package Accessor is new Arg_Accessor (T => T, 
          Key => Key, 

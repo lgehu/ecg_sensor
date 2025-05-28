@@ -58,6 +58,11 @@ package body Commands_Interpreter is
       
       use Commands_Interpreter;
 
+      function Check (Input : String) return Boolean is
+      begin
+         return Is_Valid (Input);
+      end Check;
+
       procedure Check_Registered is
       begin
          if not Exist then
@@ -80,7 +85,7 @@ package body Commands_Interpreter is
                                     Value    => Command_String.To_Bounded_String (Default_Value'Image),
                                     Cmd_Type => Cmd_Type);
 
-           Check_Pool (Arg_Len) := Is_Valid;
+           Check_Pool (Arg_Len) := Check'Access;
           -- UART_USB.Transmit_String (Arg_Index'Image & " " & Arg_Len'Image);
 
          else
@@ -126,7 +131,6 @@ package body Commands_Interpreter is
       procedure Register is
       begin
          Accessor.Register;
-         Check_Pool (Arg_Len) := Is_Valid'Access;
       end Register;
 
       function Get_Value return T is
@@ -154,7 +158,6 @@ package body Commands_Interpreter is
       procedure Register is
       begin
          Accessor.Register;
-         --Check_Pool (Arg_Len) := Is_Valid'Access;
       end Register;
       
       function Get_Value return T is
