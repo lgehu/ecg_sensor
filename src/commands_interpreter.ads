@@ -23,14 +23,6 @@ package Commands_Interpreter is
    end record;
 
    generic
-      type T is digits <>;
-   function Real_Is_Valid (Input : String) return Boolean;
-
-   generic
-      type T is (<>);
-   function Discrete_Is_Valid (Input : String) return Boolean;
-
-   generic
       type T (<>) is private;
       Key : String;
       Default_Value : T;
@@ -58,9 +50,6 @@ package Commands_Interpreter is
       Cmd_Type : Command_Type;
    package Discrete_Accessor is 
    
-      function Valid_Fn is new Discrete_Is_Valid (T => T);
-
-      --function Is_Valid (Input : String) return Boolean;
       package Accessor is new Arg_Accessor (T => T, 
                                            Key => Key,
                                            Default_Value => Default_Value, 
@@ -80,8 +69,6 @@ package Commands_Interpreter is
       Default_Value : T;
       Cmd_Type : Command_Type;
    package Real_Accessor is 
-
-      function Valid_Fn is new Real_Is_Valid (T => T);
 
       package Accessor is new Arg_Accessor (T => T, 
          Key => Key, 

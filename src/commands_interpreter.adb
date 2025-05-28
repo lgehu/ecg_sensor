@@ -111,15 +111,22 @@ package body Commands_Interpreter is
 
    package body Discrete_Accessor is
 
-      function Dummy_Fun (Input : String) return Boolean is
+      function Is_Valid (Input : String) return Boolean is
+      Dummy : T;
       begin
-         return Valid_Fn (Input);
+         begin
+            Dummy := T'Value (Input);
+            return true;
+         exception
+            when C : Constraint_Error =>
+               return false;
+         end;
       end;
 
       procedure Register is
       begin
          Accessor.Register;
-         Check_Pool (Arg_Len) := Dummy_Fun'Access;
+         Check_Pool (Arg_Len) := Is_Valid'Access;
       end Register;
 
       function Get_Value return T is
@@ -132,15 +139,22 @@ package body Commands_Interpreter is
 
    package body Real_Accessor is
 
-      function Dummy_Fun (Input : String) return Boolean is
+      function Is_Valid (Input : String) return Boolean is
+      Dummy : T;
       begin
-         return Valid_Fn (Input);
+         begin
+            Dummy := T'Value (Input);
+            return true;
+         exception
+            when C : Constraint_Error =>
+               return false;
+         end;
       end;
 
       procedure Register is
       begin
          Accessor.Register;
-         Check_Pool (Arg_Len) := Dummy_Fun'Access;
+         Check_Pool (Arg_Len) := Is_Valid'Access;
       end Register;
       
       function Get_Value return T is
@@ -148,32 +162,18 @@ package body Commands_Interpreter is
          return T'Value (Command_String.To_String (Accessor.Get_Raw));
       end Get_Value;
 
+      function Real_Is_Valid (Input : String) return Boolean is
+         Dummy : T;
+         begin
+            begin
+               Dummy := T'Value (Input);
+               return true;
+            exception
+               when C : Constraint_Error =>
+                  return false;
+            end;
+      end Real_Is_Valid;
+      
    end Real_Accessor;
 
-   function Real_Is_Valid (Input : String) return Boolean is
-      Dummy : T;
-      begin
-         begin
-            Dummy := T'Value (Input);
-            UART_USB.Transmit_String ("ok");
-            return true;
-         exception
-            when C : Constraint_Error =>
-               UART_USB.Transmit_String (Exception_Message (C));
-               return false;
-         end;
-   end Real_Is_Valid;
-
-   function Discrete_Is_Valid (Input : String) return Boolean is
-   Dummy : T;
-   begin
-      begin
-         Dummy := T'Value (Input);
-         return true;
-      exception
-         when C : Constraint_Error =>
-            return false;
-      end;
-   end Discrete_Is_Valid;
-   
 end Commands_Interpreter;
