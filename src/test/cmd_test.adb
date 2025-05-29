@@ -11,18 +11,29 @@ procedure Cmd_Test is
 
    type State is (BUSY, WAITING, PAUSED);
 
-   procedure Return_Arg (Arg : Commands_Interpreter.Argument) is
+   procedure Log (Msg : String) renames UART_USB.Transmit_String;
+
+   procedure Return_Arg (Arg : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
-      UART_USB.Transmit_String (Arg'Image & END_FLAG);
+      if Valid then
+         UART_USB.Transmit_String (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
+      else
+         UART_USB.Transmit_String ("Invalid parameter" & END_FLAG);
+      end if;
    end;
 
-   procedure Print_Args (Input : Commands_Interpreter.Argument) is
-      Value : String := Commands_Interpreter.Command_String.To_String (Input.Value);
-      Index : Natural;
+   procedure Print_Args (Input : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
-      for Arg of Commands_Interpreter.Get_Args loop
-         UART_USB.Transmit_String (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
-      end loop;
+      begin
+         Log ("oui");
+         for Arg of Commands_Interpreter.Get_Args loop
+            Log ("non");
+            UART_USB.Transmit_String (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
+         end loop;
+      exception
+         when E : Program_Error =>
+            UART_USB.Transmit_String (Exception_Message (E));
+      end;
    end Print_Args;
 
    -- Discrete type example
@@ -46,6 +57,7 @@ procedure Cmd_Test is
                Action_Fn      => Return_Arg'Access
             );
  
+   -- Action only example
    package Args_Printer is new Commands_Interpreter.Action_Accessor (
                Key => "GET_ARGS", 
                Action_Fn => Print_Args'Access

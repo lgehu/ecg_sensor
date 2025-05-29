@@ -38,13 +38,21 @@ package body Commands_Interpreter is
       Arg := Find_Arg (Command_String.To_String (Tmp.Key), Find_Arg_Index);
       
       if Cmd_Type = PARAMETER then
-         -- Update value only if the format is valid
-         if Arg.Is_Valid /= null and Arg.Is_Valid (Tmp) then
+
+         -- Reset to default value if no value is provided (Ex : ARG=;)
+         if Command_String.Length (Tmp.Value) = 0 then
+            Arg_Pool (Find_Arg_Index).Value := Arg.Default;
+            Arg.Do_Action (Arg_Pool (Find_Arg_Index), True);
+         elsif Arg.Is_Valid (Tmp) then -- Update value if format is valid
             Arg_Pool (Find_Arg_Index).Value := Tmp.Value;
+            Arg.Do_Action (Arg_Pool (Find_Arg_Index), True);
+         else -- Value is invalid
+            Arg.Do_Action (Tmp, False);
          end if;
-      else -- No value is provided, perform an action
+
+      else -- No value is provided, perform an action only
          if Arg.Do_Action /= null then
-            Arg.Do_Action (Arg);
+            Arg.Do_Action (Arg, True);
          end if;
       end if;
       
@@ -81,9 +89,9 @@ package body Commands_Interpreter is
          return Is_Valid (Input);
       end Check;
 
-      procedure Execute_Action (Input : Argument) is
+      procedure Execute_Action (Input : Argument; Valid : Boolean) is
       begin
-         Do_Action (Input);
+         Do_Action (Input, Valid);
       end Execute_Action;
 
       procedure Check_Registered is
@@ -109,9 +117,10 @@ package body Commands_Interpreter is
          else
             Arg_Len := Arg_Len + 1;
             Arg_Index := Arg_Len;
-            Arg_Pool(Arg_Len) :=  (Key     => Command_String.To_Bounded_String (Key),
-                                    Value    => Command_String.To_Bounded_String (Default_Value'Image),
-                                    Is_Valid => Check 'Access,
+            Arg_Pool(Arg_Len) :=  (Key        => Command_String.To_Bounded_String (Key),
+                                    Value     => Command_String.To_Bounded_String (Default_Value'Image),
+                                    Default   => Command_String.To_Bounded_String (Default_Value'Image), 
+                                    Is_Valid  => Check 'Access,
                                     Do_Action => Execute_Action'Access);
          end if;
 

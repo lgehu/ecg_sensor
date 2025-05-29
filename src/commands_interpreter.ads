@@ -20,9 +20,10 @@ package Commands_Interpreter is
 
    type Argument is record 
       Key       : Cmd_Str      := Command_String.Null_Bounded_String;
-      Value     : Cmd_Str      := Command_String.Null_Bounded_String; -- Current stored value
-      Is_Valid  : access function (Input : Argument) return Boolean;  -- Call when a value is provided
-      Do_Action : access procedure (Input : Argument);                -- Call if no value is provided
+      Value     : Cmd_Str      := Command_String.Null_Bounded_String;   -- Current stored value
+      Default   : Cmd_Str      := Command_String.Null_Bounded_String;   -- Default Value
+      Is_Valid  : access function (Input : Argument) return Boolean;    -- Call when a value is provided
+      Do_Action : access procedure (Input : Argument; Valid : Boolean); -- Call if no value is provided
    end record;
 
    type Arg_Array is array (Natural range <>) of Argument;
@@ -33,7 +34,7 @@ package Commands_Interpreter is
       Key : String;
       Default_Value : T;
       Is_Valid : access function (Input : Argument) return Boolean;
-      Do_Action : access procedure (Input : Argument);
+      Do_Action : access procedure (Input : Argument; Valid : Boolean);
    package Arg_Accessor is
 
       procedure Register;
@@ -55,7 +56,7 @@ package Commands_Interpreter is
       type T is (<>);
       Key : String;
       Default_Value : T;
-      Action_Fn: access procedure (Arg: Argument);
+      Action_Fn: access procedure (Arg : Argument; Valid : Boolean);
    package Discrete_Accessor is 
    
       function Is_Valid (Input : Argument) return Boolean;
@@ -79,7 +80,7 @@ package Commands_Interpreter is
       type T is digits <>;
       Key : String;
       Default_Value : T;
-      Action_Fn : access procedure (Arg : Argument);
+      Action_Fn : access procedure (Arg : Argument; Valid : Boolean);
    package Real_Accessor is 
 
       function Is_Valid (Input : Argument) return Boolean;
@@ -100,7 +101,7 @@ package Commands_Interpreter is
    -- Handle an action, no value need to be provided.
    generic
       Key : String;
-      Action_Fn : access procedure (Input : Argument);
+      Action_Fn : access procedure (Input : Argument; Valid : Boolean);
    package Action_Accessor is 
 
       function Is_Valid (Arg : Argument) return Boolean;
