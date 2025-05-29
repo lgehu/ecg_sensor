@@ -25,9 +25,7 @@ procedure Cmd_Test is
    procedure Print_Args (Input : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
       begin
-         Log ("oui");
          for Arg of Commands_Interpreter.Get_Args loop
-            Log ("non");
             UART_USB.Transmit_String (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
          end loop;
       exception
@@ -63,6 +61,13 @@ procedure Cmd_Test is
                Action_Fn => Print_Args'Access
             );
 
+   -- No callback example
+   package No_Callback is new Commands_Interpreter.Discrete_Accessor (T => Natural,
+               Key            => "NO_CALLBACK",
+               Default_Value  => 32,
+               Action_Fn      => null
+            );
+
    Arg : Commands_Interpreter.Argument;
    Input : UART_String;
 
@@ -74,6 +79,7 @@ begin
       Amplitude_Coef.Register;
       Sensor_State.Register;  
       Args_Printer.Register;
+      No_Callback.Register;
 
       loop 
          begin

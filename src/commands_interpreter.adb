@@ -86,12 +86,18 @@ package body Commands_Interpreter is
 
       function Check (Input : Argument) return Boolean is
       begin
-         return Is_Valid (Input);
+         if Is_Valid = null then
+            return True;
+         else
+            return Is_Valid (Input);
+         end if;
       end Check;
 
       procedure Execute_Action (Input : Argument; Valid : Boolean) is
       begin
-         Do_Action (Input, Valid);
+         if Do_Action /= null then
+            Do_Action (Input, Valid);
+         end if;
       end Execute_Action;
 
       procedure Check_Registered is
