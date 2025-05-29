@@ -16,22 +16,19 @@ procedure Cmd_Test is
    procedure Return_Arg (Arg : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
       if Valid then
-         UART_USB.Transmit_String (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
+         Log (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
       else
-         UART_USB.Transmit_String ("Invalid parameter" & END_FLAG);
+         Log ("Invalid parameter" & END_FLAG);
       end if;
    end;
 
    procedure Print_Args (Input : Commands_Interpreter.Argument; Valid : Boolean) is
+   Args : Arg_Array (1 .. Get_Arg_Count);
    begin
-      begin
-         for Arg of Commands_Interpreter.Get_Args loop
-            UART_USB.Transmit_String (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
-         end loop;
-      exception
-         when E : Program_Error =>
-            UART_USB.Transmit_String (Exception_Message (E));
-      end;
+      Get_Args (Args);
+      for I in Args'Range loop
+         Log (Args (I).Key'Image & " = " & Args (I).Value'Image & END_FLAG);
+      end loop;
    end Print_Args;
 
    -- Discrete type example
@@ -64,7 +61,7 @@ procedure Cmd_Test is
    -- No callback example
    package No_Callback is new Commands_Interpreter.Discrete_Accessor (T => Natural,
                Key            => "NO_CALLBACK",
-               Default_Value  => 32,
+               Default_Value  => 42,
                Action_Fn      => null
             );
 
@@ -73,7 +70,7 @@ procedure Cmd_Test is
 
 begin
       UART_USB.Initialize (115_200);
-      UART_USB.Transmit_String ("Argument interpreter" & END_FLAG);
+      Log ("Argument interpreter" & END_FLAG);
    
       Sample_Rate.Register;
       Amplitude_Coef.Register;
@@ -87,7 +84,7 @@ begin
             Arg := Commands_Interpreter.Parse (B_Str.To_String (Input));
          exception
             when E : Commands_Interpreter.Commands_Exception =>
-                  UART_USB.Transmit_String (Exception_Message (E));
+                  Log (Exception_Message (E));
          end;
       end loop;
 

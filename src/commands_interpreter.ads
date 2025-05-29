@@ -6,7 +6,7 @@ with Interfaces;
 -- The first check the validity of the input, the second one perform an action.
 package Commands_Interpreter is
 
-   Max_Arg : constant Positive := 100;
+   Max_Arg : constant Positive := 10;
 
    Commands_Exception : exception; 
 
@@ -19,11 +19,11 @@ package Commands_Interpreter is
    type Command_Type is (ACTION, PARAMETER);
 
    type Argument is record 
-      Key       : Cmd_Str      := Command_String.Null_Bounded_String;
-      Value     : Cmd_Str      := Command_String.Null_Bounded_String;   -- Current stored value
-      Default   : Cmd_Str      := Command_String.Null_Bounded_String;   -- Default Value
-      Is_Valid  : access function (Input : Argument) return Boolean;    -- Call when a value is provided
-      Do_Action : access procedure (Input : Argument; Valid : Boolean); -- Call if no value is provided
+      Key       : Cmd_Str                                              := Command_String.Null_Bounded_String;
+      Value     : Cmd_Str                                              := Command_String.Null_Bounded_String;   -- Current stored value
+      Default   : Cmd_Str                                              := Command_String.Null_Bounded_String;   -- Default Value
+      Is_Valid  : access function (Input : Argument) return Boolean    := null;    -- Call when a value is provided
+      Do_Action : access procedure (Input : Argument; Valid : Boolean) := null; -- Call if no value is provided
    end record;
 
    type Arg_Array is array (Natural range <>) of Argument;
@@ -109,7 +109,7 @@ package Commands_Interpreter is
       package Accessor is new Arg_Accessor (T => Integer, 
          Key => Key, 
          Default_Value => 0, 
-         Is_Valid => Is_Valid'Access,
+         Is_Valid => null,
          Do_Action => Action_Fn);
       use Accessor;
 
@@ -123,6 +123,10 @@ package Commands_Interpreter is
 
    function Exist (Key : String) return Boolean;
 
-   function Get_Args return Arg_Array;
+   function Get_Arg_Count return Natural;
+
+   -- Doesn't work with array slice when exceding 3 values . Is a stack error ? No exception is thrown
+   -- Old version is: return Arg_Pool ( 1 .. Arg_Len);
+   procedure Get_Args (Output : out Arg_Array);
 
 end Commands_Interpreter;

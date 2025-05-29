@@ -9,7 +9,11 @@ package body Commands_Interpreter is
 
    type Check_Array is array (1 .. Max_Arg) of access function (Input : Argument) return Boolean;
 
-   Arg_Pool : Arg_Array(1 .. Max_Arg);
+   Arg_Pool : Arg_Array(1 .. Max_Arg) := ( others => (Key => Command_String.Null_Bounded_String,
+                                                      Value => Command_String.Null_Bounded_String,
+                                                      Default => Command_String.Null_Bounded_String,
+                                                      Is_Valid => null,
+                                                      Do_Action => null));
 
    Arg_Len : Natural := 0;
 
@@ -223,13 +227,18 @@ package body Commands_Interpreter is
 
    end Action_Accessor;
 
-   function Get_Args return Arg_Array is
+   procedure Get_Args (Output: out Arg_Array)  is
+   Min_Len : constant Natural := Natural'Min (Output'Length, Arg_Len);
    begin
-      if Arg_Len = 0 then
-         return (1 .. 0 => <>);
-      else
-         return Arg_Pool (1 .. Arg_Len);
-      end if;
+      for I in 0 .. Min_Len - 1 loop
+         Output (Output'First + I) := Arg_Pool (Arg_Pool'First + I);
+      end loop;
    end;
+
+   function Get_Arg_Count return Natural is
+   begin
+      return Arg_Len;
+   end;
+
 
 end Commands_Interpreter;
