@@ -1,6 +1,7 @@
 with Ada.Numerics.Elementary_Functions;
 with UART_USB;
 with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 package body PanTompkins is
 
@@ -18,7 +19,9 @@ package body PanTompkins is
    type Buffer is array (Natural range <>) of IEEE_Float_32;
    Raw_Buffer     : Buffer(0 .. 4) := (others => 0.0);
    Deriv_Buffer   : Buffer(0 .. 3) := (others => 0.0);
+   
    type Buffer_Access is access all Buffer;
+   procedure Free_Buffer is new Ada.Unchecked_Deallocation (Buffer, Buffer_Access);
    Squared_Buffer : Buffer_Access;
 
    -- RR FIFO
@@ -39,9 +42,12 @@ package body PanTompkins is
       Window_Size  := Natural(Fs * Param.Window_Sec);
       Min_Distance := Natural(Fs * Param.Minimal_Pick_Distance_Sec);
 
-      UART_USB.Transmit_String (Param'Image);
+      if Squared_Buffer /= null then
+         Free_Buffer (Squared_Buffer);
+      end if;   
 
       Squared_Buffer := new Buffer(0 .. Window_Size - 1);
+   
       Raw_Buffer := (others => 0.0);
       Deriv_Buffer := (others => 0.0);
       RR_Values := (others => 0.0);
