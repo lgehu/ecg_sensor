@@ -6,7 +6,7 @@ with Interfaces;
 with UART_USB; use UART_USB;
 
 procedure Cmd_Test is
-
+   -- TODO : TEST WITH RECORD
    END_FLAG : String := ASCII.LF & ASCII.CR;
 
    type State is (BUSY, WAITING, PAUSED);

@@ -10,7 +10,7 @@ package UART_USB is
    subtype Int16 is Integer_16;
 
    package B_Str is new
-     Ada.Strings.Bounded.Generic_Bounded_Length (Max => 128);
+     Ada.Strings.Bounded.Generic_Bounded_Length (Max => 64);
    use B_Str;
 
    subtype UART_String is B_Str.Bounded_String;

@@ -18,8 +18,8 @@ package body Commands_Interpreter is
    Arg_Len : Natural := 0;
 
    function Parse(Input: String; Delimiter : Character := '=') return Argument is
-      Equal_Pos : Natural := Ada.Strings.Search.Index (Input, Delimiter & "", 1);
       Bounded_Input : Cmd_Str := Command_String.To_Bounded_String (Input);
+      Equal_Pos : Natural := Command_String.Index (Bounded_Input, Delimiter & "", 1);
       Tmp, Arg : Argument;
       Find_Arg_Index : Natural := 0;
       Cmd_Type : Command_Type; 

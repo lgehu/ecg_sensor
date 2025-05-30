@@ -5,7 +5,8 @@ with Ada.Unchecked_Deallocation;
 
 package body PanTompkins is
 
-   RR_FIFO_Size       : constant := 10;                  -- Size of RR interval FIFO
+   -- Size of RR interval FIFO
+   RR_FIFO_Size       : constant := 10; 
  
    -- Sampling frequency
    Fs : IEEE_Float_32 := 100.0;
