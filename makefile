@@ -1,4 +1,4 @@
-MAIN ?= ecg_sensor
+MAIN ?= main
 #PRJ_NAME ?= ecg_sensor
 
 # Toolchain

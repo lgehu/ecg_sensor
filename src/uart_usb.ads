@@ -15,6 +15,8 @@ package UART_USB is
 
    subtype UART_String is B_Str.Bounded_String;
 
+   type Endianness is (BIG_ENDIAN, LITTLE_ENDIAN); 
+
    procedure Initialize(Baudrate: Baud_Rates := 9600);
 
    procedure Read_Blocking
@@ -36,5 +38,10 @@ package UART_USB is
       Delimiter: Character := ASCII.NUL;
       Timeout : Time_Span := Seconds (1)) return UART_String;
 
+   generic 
+      type T is private;
+   procedure Write(Data : T; Format : Endianness; Status : out UART_Status);
+   --with
+    --  Pre => T'Size mod 8 = 0;
 
 end UART_USB;

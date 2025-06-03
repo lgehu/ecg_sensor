@@ -1,5 +1,6 @@
 with STM32.GPIO;    use STM32.GPIO;
 with STM32.Device;  use STM32.Device;
+with Ada.Unchecked_Conversion;
 
 package body UART_USB is
 
@@ -125,5 +126,22 @@ package body UART_USB is
       UART_USB.Put_Blocking (UInt9(Raw / 256), Status); -- MSB
       UART_USB.Put_Blocking (UInt9(Raw mod 256), Status); -- LSB
    end Write16;
+
+   procedure Write(Data : T; Format : ENDIANNESS; Status : out UART_Status) is 
+   type Byte_Array is array (1 .. T'Size / 8) of UInt8;
+   function To_Bytes is new Ada.Unchecked_Conversion (T, Byte_Array);
+   Bytes : Byte_Array := To_Bytes (Data);
+   begin
+      if Format = BIG_ENDIAN then
+         for Byte of reverse Bytes loop
+            Put_Blocking (UInt9 (Byte), Status);
+         end loop;
+      else
+         for Byte of Bytes loop
+            Put_Blocking (UInt9 (Byte), Status);
+         end loop;
+      end if;
+   end;
+
 
 end UART_USB;
