@@ -2,6 +2,7 @@
 from serial import Serial
 import numpy as np
 import struct
+import matplotlib.pyplot as plt
 
 # Test Int16 transmissions to UART with the STM32F446RE
 if __name__ == "__main__":
