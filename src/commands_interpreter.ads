@@ -22,8 +22,8 @@ package Commands_Interpreter is
       Key       : Cmd_Str                                              := Command_String.Null_Bounded_String;
       Value     : Cmd_Str                                              := Command_String.Null_Bounded_String;   -- Current stored value
       Default   : Cmd_Str                                              := Command_String.Null_Bounded_String;   -- Default Value
-      Is_Valid  : access function (Input : Argument) return Boolean    := null;    -- Call when a value is provided
-      Do_Action : access procedure (Input : Argument; Valid : Boolean) := null; -- Call if no value is provided
+      Is_Valid  : access function (User_Input : Argument) return Boolean    := null; -- Call when a value is provided
+      Do_Action : access procedure (User_Input : Argument; Valid : Boolean) := null; -- Always called 
    end record;
 
    type Arg_Array is array (Natural range <>) of Argument;
@@ -106,9 +106,9 @@ package Commands_Interpreter is
 
       function Is_Valid (Arg : Argument) return Boolean;
 
-      package Accessor is new Arg_Accessor (T => Integer, 
+      package Accessor is new Arg_Accessor (T => Boolean, 
          Key => Key, 
-         Default_Value => 0, 
+         Default_Value => False, 
          Is_Valid => null,
          Do_Action => Action_Fn);
       use Accessor;

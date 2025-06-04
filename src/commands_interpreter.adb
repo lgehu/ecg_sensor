@@ -46,17 +46,17 @@ package body Commands_Interpreter is
          -- Reset to default value if no value is provided (Ex : ARG=;)
          if Command_String.Length (Tmp.Value) = 0 then
             Arg_Pool (Find_Arg_Index).Value := Arg.Default;
-            Arg.Do_Action (Arg_Pool (Find_Arg_Index), True);
+            Arg.Do_Action (Tmp, True);
          elsif Arg.Is_Valid (Tmp) then -- Update value if format is valid
             Arg_Pool (Find_Arg_Index).Value := Tmp.Value;
-            Arg.Do_Action (Arg_Pool (Find_Arg_Index), True);
+            Arg.Do_Action (Tmp, True);
          else -- Value is invalid
             Arg.Do_Action (Tmp, False);
          end if;
 
       else -- No value is provided, perform an action only
          if Arg.Do_Action /= null then
-            Arg.Do_Action (Arg, True);
+            Arg.Do_Action (Tmp, True);
          end if;
       end if;
       

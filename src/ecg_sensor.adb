@@ -19,8 +19,7 @@ package body Ecg_Sensor is
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
 
-   END_CMD_FLAG : constant Character := ASCII.Semicolon;
-   CMD_END : constant String := END_CMD_FLAG & "";
+   CMD_END : constant Character := ASCII.Semicolon;
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (INIT, SAMPLING, PAUSED);
@@ -28,6 +27,7 @@ package body Ecg_Sensor is
    type Output_Format_Type is (OUT_ASCII, IEEE_FLOAT_32_BIGE);
 
    package UART_STR renames UART_USB.B_Str;
+   package Cmd_Str renames Commands_Interpreter.Command_String;
 
    Sample_Index : Positive := 1;                -- Current index in the sample data 
    Raw_Input : UART_USB.UART_String;            -- Buffer to store incoming commands
@@ -35,7 +35,7 @@ package body Ecg_Sensor is
    
    procedure Log (Msg : String) renames UART_USB.Transmit_String;
 
-   procedure Return_Arg (Arg : Commands_Interpreter.Argument; Valid : Boolean) is
+   procedure Return_Arg (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
       if Valid then
          Log ("OK" & CMD_END);
@@ -44,14 +44,24 @@ package body Ecg_Sensor is
       end if;
    end;
 
-   procedure Print_Args (Input : Commands_Interpreter.Argument; Valid : Boolean) is
+   procedure Print_Args (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    Args : Commands_Interpreter.Arg_Array (1 .. Commands_Interpreter.Get_Arg_Count);
+   Index : Natural;
    begin
       Commands_Interpreter.Get_Args (Args);
-      for I in Args'Range loop
-         Log (Args (I).Key'Image & " = " & Args (I).Value'Image & CR_LF);
-      end loop;
-      Log(CMD_END);
+
+      if Cmd_Str.Length (User_Input.Value) > 0 then
+         Log (Cmd_Str.To_String (
+               Commands_Interpreter.Find_Arg (
+                     Cmd_Str.To_String (User_Input.Value), Index).Value));
+      else
+         for I in Args'Range loop
+            -- Print key=value
+            Log (Cmd_Str.To_String (Args (I).Key) & "=" & 
+                  Cmd_Str.To_String (Args (I).Value) & CR_LF);
+         end loop;
+      end if;
+      Log(CMD_END & "");
    end Print_Args;
 
    package Sample_Rate is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Sampling_Frequency_Type,
@@ -109,13 +119,13 @@ package body Ecg_Sensor is
       UART_USB.Read_Blocking (Data, Status, Milliseconds (0));
       if Status = HAL.UART.Ok then
          Char := Character'Val (Data);
-         if UART_STR.Length (Raw_Input) >= UART_STR.Max_Length or Char = END_CMD_FLAG then
+         if UART_STR.Length (Raw_Input) >= UART_STR.Max_Length or Char = CMD_END then
             
             begin
                Arg := Commands_Interpreter.Parse (UART_STR.To_String (Raw_Input));
             exception
                when E : Commands_Interpreter.Commands_Exception =>
-                  Log (Exception_Message (E) & CR_LF);
+                  Log (Exception_Message (E) & CR_LF & CMD_END);
             end;
 
             Raw_Input := UART_STR.Null_Bounded_String;
@@ -131,8 +141,7 @@ package body Ecg_Sensor is
    begin
 
       begin
-         Intended_State := Sensor_State_Type'Value (
-                              Commands_Interpreter.Command_String.To_String (Input.Value));
+         Intended_State := Sensor_State_Type'Value (Cmd_Str.To_String (Input.Value));
          
          case Intended_State is
             when SAMPLING =>
@@ -223,7 +232,7 @@ package body Ecg_Sensor is
                         Log (Sample_Index'Image & "," & Result'Image & CR_LF & CMD_END);
                      elsif Output_Format.Get_Value = IEEE_FLOAT_32_BIGE then
                         Write_Float32 (32.56, UART_USB.BIG_ENDIAN, Status);
-                        Log (CMD_END);
+                        Log (CMD_END & "");
                      end if;
 
                   end;

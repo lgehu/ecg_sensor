@@ -127,7 +127,7 @@ package body UART_USB is
       UART_USB.Put_Blocking (UInt9(Raw mod 256), Status); -- LSB
    end Write16;
 
-   procedure Write(Data : T; Format : ENDIANNESS; Status : out UART_Status) is 
+   procedure Write(Data : T; Format : Endianness; Status : out UART_Status) is 
    type Byte_Array is array (1 .. T'Size / 8) of UInt8;
    function To_Bytes is new Ada.Unchecked_Conversion (T, Byte_Array);
    Bytes : Byte_Array := To_Bytes (Data);
