@@ -1,3 +1,5 @@
+with System;
+
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time; use Ada.Real_Time;
 with Ada.Strings.Bounded;
@@ -9,12 +11,14 @@ with HAL.UART; use HAL.UART;
 with UART_USB;
 with PanTompkins;
 with AdaData;
+with Ada.Unchecked_Conversion;
 
 package body Ecg_Sensor is
 
    -- TODO: Add parameter for input channel and output channel selection
    -- TODO: Command to acquire an arbitrary ammount of sample (ACQUIRE=100)
    -- TODO: Resolve bug of overflow from the UART 
+   -- TODO: Documentation for commands and interpreter
 
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
@@ -24,7 +28,7 @@ package body Ecg_Sensor is
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (INIT, SAMPLING, PAUSED);
 
-   type Output_Format_Type is (OUT_ASCII, IEEE_FLOAT_32_BIGE);
+   type Output_Format_Type is (OUT_ASCII, FLOAT32);
 
    package UART_STR renames UART_USB.B_Str;
    package Cmd_Str renames Commands_Interpreter.Command_String;
@@ -32,6 +36,7 @@ package body Ecg_Sensor is
    Sample_Index : Positive := 1;                -- Current index in the sample data 
    Raw_Input : UART_USB.UART_String;            -- Buffer to store incoming commands
    Current_State : Sensor_State_Type := INIT;   -- Current state of the sensor
+   Process_Start_Time : Time := Clock;
    
    procedure Log (Msg : String) renames UART_USB.Transmit_String;
 
@@ -43,6 +48,17 @@ package body Ecg_Sensor is
          Log ("Invalid parameter" & CMD_END);
       end if;
    end;
+
+   procedure Reset_Sensor (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
+      SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#),
+                                 Volatile;
+   begin
+      Log ("OK" & CMD_END);
+      SCB_AIRCR := 16#05FA0004#;
+      loop
+         null; -- Wait reset
+      end loop;
+   end Reset_Sensor;
 
    procedure Print_Args (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    Args : Commands_Interpreter.Arg_Array (1 .. Commands_Interpreter.Get_Arg_Count);
@@ -64,9 +80,9 @@ package body Ecg_Sensor is
       Log(CMD_END & "");
    end Print_Args;
 
-   package Sample_Rate is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Sampling_Frequency_Type,
+   package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Positive,
                Key            => "SAMPLE_RATE",
-               Default_Value  => 100.0,
+               Default_Value  => 100,
                Action_Fn      => Return_Arg'Access
             );
 
@@ -106,34 +122,68 @@ package body Ecg_Sensor is
 
    package Output_Format is new Commands_Interpreter.Discrete_Accessor (T => Output_Format_Type,
                Key => "OUTPUT_FORMAT", 
-               Default_Value => IEEE_FLOAT_32_BIGE,
+               Default_Value => FLOAT32,
                Action_Fn => Return_Arg'Access
             );
 
+   package Reset is new Commands_Interpreter.Action_Accessor (
+               Key => "RESET", 
+               Action_Fn => Reset_Sensor'Access
+            );
+
    procedure Read_UART is
-   Status : UART_Status;
+   Status : UART_Status := HAL.UART.Ok;
    Char : Character;
    Arg : Commands_Interpreter.Argument;
    Data : UInt9;
    begin
-      UART_USB.Read_Blocking (Data, Status, Milliseconds (0));
-      if Status = HAL.UART.Ok then
-         Char := Character'Val (Data);
-         if UART_STR.Length (Raw_Input) >= UART_STR.Max_Length or Char = CMD_END then
-            
-            begin
-               Arg := Commands_Interpreter.Parse (UART_STR.To_String (Raw_Input));
-            exception
-               when E : Commands_Interpreter.Commands_Exception =>
-                  Log (Exception_Message (E) & CR_LF & CMD_END);
-            end;
+      while Status = HAL.UART.Ok loop 
+         UART_USB.Read_Blocking (Data, Status, Milliseconds (0));
+         if Status = HAL.UART.Ok then
+            Char := Character'Val (Data);
+            if UART_STR.Length (Raw_Input) >= UART_STR.Max_Length or Char = CMD_END then
+               
+               begin
+                  Arg := Commands_Interpreter.Parse (UART_STR.To_String (Raw_Input));
+               exception
+                  when E : Commands_Interpreter.Commands_Exception =>
+                     Log (Exception_Message (E) & CR_LF & CMD_END);
+               end;
 
-            Raw_Input := UART_STR.Null_Bounded_String;
-         else
-            UART_STR.Append (Raw_Input, Char);
+               Raw_Input := UART_STR.Null_Bounded_String;
+            else
+               UART_STR.Append (Raw_Input, Char);
+            end if;
          end if;
-      end if;
+      end loop;
    end Read_UART;
+
+   -- Send binary float with escape value
+   procedure Transmit_Float_32 (Data : IEEE_Float_32) is
+   type Byte_Array is array (1 .. 4) of UInt8;
+   function To_Bytes is new Ada.Unchecked_Conversion (IEEE_Float_32, Byte_Array);
+   Raw_Bytes : Byte_Array := To_Bytes (Data);
+   
+   Escape_Byte : constant UInt9 := 16#07D#; 
+   Semicolon_Byte : constant UInt9 := 16#03B#;
+
+   Status : UART_Status;
+   Byte9 : UInt9;
+
+   begin
+      for Byte of reverse Raw_Bytes loop
+         Byte9 := UInt9 (Byte);
+         if Byte9 = Semicolon_Byte then
+            UART_USB.Put_Blocking (Escape_Byte, Status);
+            UART_USB.Put_Blocking (Escape_Byte + 1, Status);
+         elsif Byte9 = Escape_Byte then
+            UART_USB.Put_Blocking (Escape_Byte, Status);
+            UART_USB.Put_Blocking (Escape_Byte + 2, status);
+         else
+            UART_USB.Put_Blocking (Byte9, Status);
+         end if;
+      end loop;
+   end Transmit_Float_32;
 
    function Valide_State (Input : Commands_Interpreter.Argument) return Boolean is
    Intended_State : Sensor_State_Type;
@@ -148,7 +198,7 @@ package body Ecg_Sensor is
                if Current_State = INIT then
                   Current_State := SAMPLING;
 
-                  PanTompkins.Initialize ((Sampling_Frequency => Sample_Rate.Get_Value, 
+                  PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
                                           Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
                                           Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
                                           Window_Sec => Window_Sec.Get_Value, 
@@ -191,7 +241,7 @@ package body Ecg_Sensor is
    procedure Initialize is
    begin
       UART_USB.Initialize (115_200);
-      UART_USB.Transmit_String ("ECG_SENSOR v0.1" & CR_LF);
+      UART_USB.Transmit_String ("ECG_SENSOR v0.1" & CR_LF & CMD_END);
 
       Amplitude_Coef.Register;
       Sample_Rate.Register;
@@ -201,17 +251,36 @@ package body Ecg_Sensor is
       Set_State.Register;
       Output_Format.Register;
       Get_Args.Register;
+      Reset.Register;
 
       -- Initialize algorithm with default values
-      PanTompkins.Initialize ((Sampling_Frequency => Sample_Rate.Get_Value, 
+      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
                                           Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
                                           Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
                                           Window_Sec => Window_Sec.Get_Value, 
                                           Output_Stage => Output_Stage.Get_Value));
    end Initialize;
 
-   procedure Write_Float32 is new UART_USB.Write (T => IEEE_Float_32);
-   
+   procedure Process_Sample is 
+   Result : IEEE_Float_32 := 0.0;
+   Status : UART_Status;
+   Sample_Period : Time_Span := To_Time_Span(1.0 / Sample_Rate.Get_Value);
+   begin
+      if (Clock - Process_Start_Time) > Sample_Period then
+         Process_Start_Time := Clock;
+
+         Result := PanTompkins.Process_Sample (AdaData.Data (Sample_Index));
+         Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1;
+         
+         if Output_Format.Get_Value = OUT_ASCII then
+            Log (Sample_Index'Image & "," & Result'Image & CR_LF & CMD_END);
+         elsif Output_Format.Get_Value = FLOAT32 then
+            Transmit_Float_32 (Result);
+            Log (CMD_END & "");
+         end if;
+      end if;
+   end Process_Sample;
+
    procedure Update_Blocking is
    begin
       begin
@@ -220,23 +289,7 @@ package body Ecg_Sensor is
 
             case Current_State is
                when SAMPLING =>
-
-                  declare
-                     Result : IEEE_Float_32 := 0.0;
-                     Status : UART_Status;
-                  begin
-                     Result := PanTompkins.Process_Sample (AdaData.Data (Sample_Index));
-                     Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1;
-                     
-                     if Output_Format.Get_Value = OUT_ASCII then
-                        Log (Sample_Index'Image & "," & Result'Image & CR_LF & CMD_END);
-                     elsif Output_Format.Get_Value = IEEE_FLOAT_32_BIGE then
-                        Write_Float32 (32.56, UART_USB.BIG_ENDIAN, Status);
-                        Log (CMD_END & "");
-                     end if;
-
-                  end;
-
+                  Process_Sample;
                when others =>
                   null;
             end case;
