@@ -71,7 +71,7 @@ package body Commands_Interpreter is
             return Arg_Pool (I);
          end if;
       end loop;
-      raise Commands_Exception with "Argument not found";
+      raise Commands_Exception with "Argument " & Key & " not found";
    end Find_Arg;
 
    function Exist (Key : String) return Boolean is

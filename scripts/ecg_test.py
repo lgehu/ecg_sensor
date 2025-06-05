@@ -26,7 +26,7 @@ def send_command(ser : Serial, cmd : str):
     ser.read_all()
     ser.reset_input_buffer()
     ser.reset_output_buffer()
-    ser.write((cmd+";").encode())
+    ser.write(("<"+cmd+">").encode())
     ser.flush()
     wait_response(ser)
 
@@ -47,6 +47,7 @@ if __name__ == "__main__":
         send_command(ser, "SET_STATE=SAMPLING")
 
         time.sleep(5)
+
         send_command(ser, "RESET")
 
         # for i in range(5):
