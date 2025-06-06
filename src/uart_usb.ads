@@ -1,9 +1,15 @@
-with STM32.USARTs; use STM32.USARTs;
-with HAL; use HAL;
-with HAL.UART; use HAL.UART;
-with Ada.Real_Time; use Ada.Real_Time;
+with STM32.USARTs;          use STM32.USARTs;
+with HAL;                   use HAL;
+with HAL.UART;              use HAL.UART;
+with Ada.Real_Time;         use Ada.Real_Time;
 with Ada.Strings.Bounded;
-with Interfaces; use Interfaces;
+with Interfaces;            use Interfaces;
+with Ada.Interrupts;        use Ada.Interrupts;
+
+with STM32.Device;         use STM32.Device;
+with STM32.GPIO;           use STM32.GPIO;
+with Ada.Interrupts;       use Ada.Interrupts;
+with Ada.Interrupts.Names; use Ada.Interrupts.Names;
 
 package UART_USB is
 
@@ -16,6 +22,8 @@ package UART_USB is
    subtype UART_String is B_Str.Bounded_String;
 
    type Endianness is (BIG_ENDIAN, LITTLE_ENDIAN); 
+
+   type Command_Read_State is (WAITING, PARSING);
 
    procedure Initialize(Baudrate: Baud_Rates := 9600);
 
@@ -41,7 +49,31 @@ package UART_USB is
    generic 
       type T is private;
    procedure Write(Data : T; Format : Endianness; Status : out UART_Status);
-   --with
-    --  Pre => T'Size mod 8 = 0;
+   
+   protected type Controller (Timeout_Ms : Natural; Start_Char : Character ; Terminator : Character) is
+     
+      procedure Enable_Interrupt;
+   
+      procedure Disable_Interrupt;
+
+      function Has_Data return Boolean;
+
+      function Get_Data return UART_String;
+   
+   private
+
+      procedure Handle_Reception;
+   
+      procedure IRQ_Handler with Attach_Handler => USART2_Interrupt;
+  
+      Raw_Input : UART_String; -- Buffer to store incoming commands
+
+      Command_State : Command_Read_State := WAITING;
+
+      Last_Char_Time : Time := Clock;              -- Last received char from UART
+
+      Is_Data : Boolean := False;
+
+   end Controller;
 
 end UART_USB;

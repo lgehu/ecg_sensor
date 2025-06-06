@@ -143,5 +143,81 @@ package body UART_USB is
       end if;
    end;
 
+   protected body Controller is
+
+      procedure Enable_Interrupt is
+      begin
+         Enable_Interrupts (USARTz, source => Received_Data_Not_Empty);
+         Is_Data := False;
+         Raw_Input := Null_Bounded_String;
+      end Enable_Interrupt;
+
+      procedure Disable_Interrupt is
+      begin
+         Disable_Interrupts (USARTz, source => Received_Data_Not_Empty);
+         Is_Data := False;
+      end Disable_Interrupt;
+
+      function Has_Data return Boolean is
+      begin
+         return Is_Data;
+      end Has_Data;
+
+      function Get_Data return UART_String is
+      begin
+         return Raw_Input;
+      end Get_Data;
+
+      procedure Handle_Reception is 
+      Received_Char : constant Character := Character'Val (Current_Input (USARTz));
+      begin
+         case Command_State is
+            when WAITING =>
+               if Received_Char = '<' then
+                  Raw_Input := Null_Bounded_String;
+                  Command_State := PARSING;
+                  Last_Char_Time := Clock;
+               end if;
+            when PARSING =>
+               if Received_Char = '>' then
+                  -- Inform main program 
+                  -- Raw_Input := Null_Bounded_String;
+                  Command_State := WAITING;
+
+                  -- Disable UART while command is not processed
+                  loop
+                     exit when not Status (USARTz, Read_Data_Register_Not_Empty);
+                  end loop;
+
+                  Disable_Interrupts (USARTz, Source => Received_Data_Not_Empty);
+                  Is_Data := True;
+
+               else
+                  -- Max Buffer length or timeout reached 
+                  if (Length (Raw_Input) + 1) >= Max_Length or
+                     (Clock - Last_Char_Time) > To_Time_Span(5.0) then
+                     Command_State := WAITING;
+                     -- Throw error
+                  else
+                     Append (Raw_Input, Received_Char);
+                     Last_Char_Time := Clock;
+                  end if;
+               end if;
+         end case;
+      end Handle_Reception;
+
+      procedure IRQ_Handler is
+      begin
+         --  check for data arrival
+         if Status (USARTz, Read_Data_Register_Not_Empty) and
+            Interrupt_Enabled (USARTz, Received_Data_Not_Empty)
+         then
+            Handle_Reception;
+            Clear_Status (USARTz, Read_Data_Register_Not_Empty);
+         end if;
+      end IRQ_Handler;
+
+   end Controller;
+
 
 end UART_USB;

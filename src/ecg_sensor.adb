@@ -17,8 +17,9 @@ package body Ecg_Sensor is
 
    -- TODO: Add parameter for input channel and output channel selection
    -- TODO: Command to acquire an arbitrary ammount of sample (ACQUIRE=100)
-   -- TODO: Resolve bug of overflow from the UART 
    -- TODO: Documentation for commands and interpreter
+
+   COM : UART_USB.Controller (5000, '<', '>');
 
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
@@ -29,7 +30,6 @@ package body Ecg_Sensor is
    type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
 
    type Output_Format_Type is (OUT_ASCII, FLOAT32);
-   type Command_Read_State is (WAITING, PARSING);
 
    package UART_STR renames UART_USB.B_Str;
    package Cmd_Str renames Commands_Interpreter.Command_String;
@@ -38,17 +38,20 @@ package body Ecg_Sensor is
    Raw_Input : UART_USB.UART_String;            -- Buffer to store incoming commands
    Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
    Process_Start_Time : Time := Clock;          -- Precedent sample sent time
-   Last_Char_Time : Time := Clock;              -- Last received char from UART
-   Command_State : Command_Read_State := WAITING;
    
    procedure Log (Msg : String) renames UART_USB.Transmit_String;
+
+   procedure Send_Command (Msg : String) is
+   begin
+      Log ("<" & Msg & ">");   
+   end Send_Command;
 
    procedure Return_Arg (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
       if Valid then
-         Log ("OK" & CMD_END);
+         Send_Command ("OK");
       else
-         Log ("Invalid parameter" & CMD_END);
+         Send_Command ("Invalid parameter");
       end if;
    end;
 
@@ -56,7 +59,7 @@ package body Ecg_Sensor is
       SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#),
                                  Volatile;
    begin
-      Log ("OK" & CMD_END);
+      Send_Command ("OK");
       SCB_AIRCR := 16#05FA0004#;
       loop
          null; -- Wait reset
@@ -69,6 +72,7 @@ package body Ecg_Sensor is
    begin
       Commands_Interpreter.Get_Args (Args);
 
+      Log ("<");
       if Cmd_Str.Length (User_Input.Value) > 0 then
          Log (Cmd_Str.To_String (
                Commands_Interpreter.Find_Arg (
@@ -80,7 +84,7 @@ package body Ecg_Sensor is
                   Cmd_Str.To_String (Args (I).Value) & CR_LF);
          end loop;
       end if;
-      Log(CMD_END & "");
+      Log (">");
    end Print_Args;
 
    package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Positive,
@@ -141,46 +145,17 @@ package body Ecg_Sensor is
             );
 
    procedure Read_Command is
-   Status : UART_Status := HAL.UART.Ok;
-   Char : Character;
    Arg : Commands_Interpreter.Argument;
-   Data : UInt9;
    begin
-      while Status = HAL.UART.Ok loop 
-         UART_USB.Read_Blocking (Data, Status, Milliseconds (1));
-         if Status = HAL.UART.Ok then
-            Char := Character'Val (Data);
-            case Command_State is
-               when WAITING =>
-                  if Char = '<' then
-                     Raw_Input := UART_STR.Null_Bounded_String;
-                     Command_State := PARSING;
-                     Last_Char_Time := Clock;
-                  end if;
-               when PARSING =>
-                  if Char = '>' then
-                     begin
-                        Arg := Commands_Interpreter.Parse (UART_STR.To_String (Raw_Input));
-                     exception
-                        when E : Commands_Interpreter.Commands_Exception =>
-                           Log (Exception_Message (E) & CR_LF & CMD_END);
-                     end;
-                     Raw_Input := UART_STR.Null_Bounded_String;
-                     Command_State := WAITING;
-                  else
-                     -- Max Buffer length or timeout reached 
-                     if (UART_STR.Length (Raw_Input) + 1) >= UART_STR.Max_Length or
-                        (Clock - Last_Char_Time) > To_Time_Span(5.0) then
-                        Command_State := WAITING;
-                        Log ("<ERROR_PARSING>");
-                     else
-                        UART_STR.Append (Raw_Input, Char);
-                        Last_Char_Time := Clock;
-                     end if;
-                  end if;
-            end case;
-         end if;
-      end loop;
+      if COM.Has_Data then
+         begin
+            Arg := Commands_Interpreter.Parse (UART_STR.To_String (COM.Get_Data), '=');
+         exception
+            when E : Commands_Interpreter.Commands_Exception =>
+               Send_Command (Exception_Message (E));
+         end;
+         COM.Enable_Interrupt;
+      end if;
    end Read_Command;
 
    -- Send binary float with escape value
@@ -244,25 +219,27 @@ package body Ecg_Sensor is
                Current_State := PAUSED;
             end if;
          else
-            Log ("Invalid action" & CR_LF & CMD_END);
+            Send_Command ("Invalid action");
          end if;
 
          if Intended_State /= Current_State then
-            Log ("Can't change state from " & 
-                  Current_State'Image & " to " & Intended_State'Image & CR_LF & CMD_END);
+            Send_Command ("Can't change state from " & 
+                  Current_State'Image & " to " & Intended_State'Image);
          else
-            Log ("OK" & CMD_END);
+            Send_Command ("OK");
          end if;
 
       exception
          when E : Constraint_Error =>
-            Log (Exception_Message (E) & CMD_END);
+            Send_Command (Exception_Message (E));
       end;
    end Change_State;
 
    procedure Initialize is
    begin
       UART_USB.Initialize (115_200);
+      COM.Enable_Interrupt;
+      
       UART_USB.Transmit_String ("ECG_SENSOR v0.1" & CR_LF & CMD_END);
 
       -- Parameters
@@ -301,7 +278,7 @@ package body Ecg_Sensor is
          
          case Output_Format.Get_Value is
             when OUT_ASCII =>
-               Log (Sample_Index'Image & "," & Result'Image & CR_LF & CMD_END);
+               Log (Sample_Index'Image & "," & Result'Image & CMD_END);
             when FLOAT32 =>
                Transmit_Float_32 (Result);
                Log (CMD_END & "");
@@ -326,9 +303,9 @@ package body Ecg_Sensor is
          end loop;
       exception -- Unknows Errors (if UART is working..), restart the board
          when E : Constraint_Error =>
-            Log (Exception_Message (E) & CMD_END);
+            Send_Command (Exception_Message (E) & CMD_END);
          when E : Program_Error => 
-            Log (Exception_Message (E) & CMD_END);
+            Send_Command (Exception_Message (E) & CMD_END);
       end;
    end Update_Blocking;
 

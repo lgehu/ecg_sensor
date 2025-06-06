@@ -22,37 +22,27 @@ def read_float_32(ser : Serial) -> float:
     return struct.unpack ('>f', bytes(data))[0]
 
 def send_command(ser : Serial, cmd : str):
-    print(">" + cmd)
+    #print(">" + cmd)
     ser.read_all()
     ser.reset_input_buffer()
     ser.reset_output_buffer()
     ser.write(("<"+cmd+">").encode())
     ser.flush()
+    while not ser.readable:
+        pass
     wait_response(ser)
 
 def wait_response(ser : Serial):
-    data = ser.read_until(";".encode())[:-1]
+    ser.read_until("<".encode())[:-1]
+    data = ser.read_until(">".encode())[:-1]
     print("<" + data.decode(errors="ignore"))
 
-# Test Int16 transmissions to UART with the STM32F446RE
 if __name__ == "__main__":
     # Open port (Linux only)
     with Serial("/dev/ttyACM0", baudrate=115200, timeout=1) as ser:
         ser.reset_input_buffer()
         ser.reset_output_buffer()
       
-        send_command(ser, "RESET")
-        send_command(ser, "SAMPLE_RATE=1000")
-        send_command(ser, "OUTPUT_FORMAT=FLOAT32")
-        send_command(ser, "SET_STATE=SAMPLING")
-
-        time.sleep(2)
-
-        send_command(ser, "RESET")
-        send_command(ser, "GET_ARGS")
-
-        # for i in range(5):
-        #     ser.read_until(";")
-        #     value = read_float_32(ser)
-        #     print("Value=" + str(value))
-
+        while True:
+            user_input = input(">")
+            send_command(ser, user_input.upper())
