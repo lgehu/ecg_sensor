@@ -6,7 +6,7 @@ with Interfaces;
 -- The first check the validity of the input, the second one perform an action.
 package Commands_Interpreter is
 
-   Max_Arg : constant Positive := 10;
+   Max_Arg : constant Positive := 15;
 
    Commands_Exception : exception; 
 

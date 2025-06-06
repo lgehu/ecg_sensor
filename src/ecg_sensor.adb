@@ -26,10 +26,9 @@ package body Ecg_Sensor is
    CMD_END : constant Character := ASCII.Semicolon;
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
-   type Sensor_State_Type is (INIT, SAMPLING, PAUSED);
+   type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
 
    type Output_Format_Type is (OUT_ASCII, FLOAT32);
-
    type Command_Read_State is (WAITING, PARSING);
 
    package UART_STR renames UART_USB.B_Str;
@@ -37,7 +36,7 @@ package body Ecg_Sensor is
 
    Sample_Index : Positive := 1;                -- Current index in the sample data 
    Raw_Input : UART_USB.UART_String;            -- Buffer to store incoming commands
-   Current_State : Sensor_State_Type := INIT;   -- Current state of the sensor
+   Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
    Process_Start_Time : Time := Clock;          -- Precedent sample sent time
    Last_Char_Time : Time := Clock;              -- Last received char from UART
    Command_State : Command_Read_State := WAITING;
@@ -114,12 +113,6 @@ package body Ecg_Sensor is
                Action_Fn      => Return_Arg'Access
             );
 
-   package Set_State is new Commands_Interpreter.Arg_Accessor (T => Sensor_State_Type,
-               Key => "SET_STATE",
-               Default_Value => INIT,
-               Is_Valid => Valide_State'Access,
-               Do_Action => null);
-
    package Get_Args is new Commands_Interpreter.Action_Accessor (
                Key => "GET_ARGS", 
                Action_Fn => Print_Args'Access);
@@ -129,8 +122,20 @@ package body Ecg_Sensor is
                Default_Value => FLOAT32,
                Action_Fn => Return_Arg'Access
             );
+   
+   package Start_Cmd is new Commands_Interpreter.Action_Accessor (
+               Key => "START", 
+               Action_Fn => Change_State'Access);
 
-   package Reset is new Commands_Interpreter.Action_Accessor (
+   package Stop_Cmd is new Commands_Interpreter.Action_Accessor (
+               Key => "STOP", 
+               Action_Fn => Change_State'Access);
+
+   package Pause_Cmd is new Commands_Interpreter.Action_Accessor (
+               Key => "PAUSE", 
+               Action_Fn => Change_State'Access);
+
+   package Reset_Cmd is new Commands_Interpreter.Action_Accessor (
                Key => "RESET", 
                Action_Fn => Reset_Sensor'Access
             );
@@ -205,44 +210,46 @@ package body Ecg_Sensor is
       end loop;
    end Transmit_Float_32;
 
-   function Valide_State (Input : Commands_Interpreter.Argument) return Boolean is
+   procedure Change_State (Input : Commands_Interpreter.Argument; Valid : Boolean) is
    Intended_State : Sensor_State_Type;
    Old_State : Sensor_State_Type := Current_State;
+   Cmd_Key : String := Cmd_Str.To_String (Input.Key);
    begin
-
       begin
-         Intended_State := Sensor_State_Type'Value (Cmd_Str.To_String (Input.Value));
-         
-         case Intended_State is
-            when SAMPLING =>
-               if Current_State = INIT then
-                  Current_State := SAMPLING;
+         if Cmd_Key = "START" then
+            Intended_State := RUNNING;
+            if Current_State = IDLE then
+               Current_State := RUNNING;
+               
+               Sample_Index := 1;
+               PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
+                                       Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
+                                       Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
+                                       Window_Sec => Window_Sec.Get_Value, 
+                                       Output_Stage => Output_Stage.Get_Value));
 
-                  PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
-                                          Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
-                                          Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
-                                          Window_Sec => Window_Sec.Get_Value, 
-                                          Output_Stage => Output_Stage.Get_Value));
-
-               elsif Current_State = PAUSED then
-                  Current_State := SAMPLING;
-               end if;
-            when INIT =>
-               if Current_State = SAMPLING or 
-                     Current_State = PAUSED or 
-                     Current_State = INIT then
-                  Current_State := INIT;
-               end if;
-            when PAUSED =>
-               if Current_State = SAMPLING then
-                  Current_State := PAUSED;
-               end if;
-         end case;
+            elsif Current_State = PAUSED then
+               Current_State := RUNNING;
+            end if;
+         elsif Cmd_Key = "STOP" then
+            Intended_State := IDLE;
+            if Current_State = RUNNING or 
+                  Current_State = PAUSED or 
+                  Current_State = IDLE then
+               Current_State := IDLE;
+            end if;
+         elsif Cmd_Key = "PAUSE" then
+            Intended_State := PAUSED;            
+            if Current_State = RUNNING then
+               Current_State := PAUSED;
+            end if;
+         else
+            Log ("Invalid action" & CR_LF & CMD_END);
+         end if;
 
          if Intended_State /= Current_State then
             Log ("Can't change state from " & 
                   Current_State'Image & " to " & Intended_State'Image & CR_LF & CMD_END);
-            return False;
          else
             Log ("OK" & CMD_END);
          end if;
@@ -250,27 +257,28 @@ package body Ecg_Sensor is
       exception
          when E : Constraint_Error =>
             Log (Exception_Message (E) & CMD_END);
-            return False;
       end;
-
-      return True;
-
-   end Valide_State;
+   end Change_State;
 
    procedure Initialize is
    begin
       UART_USB.Initialize (115_200);
       UART_USB.Transmit_String ("ECG_SENSOR v0.1" & CR_LF & CMD_END);
 
+      -- Parameters
       Amplitude_Coef.Register;
       Sample_Rate.Register;
       Pick_Distance.Register;
       Window_Sec.Register;
       Output_Stage.Register;
-      Set_State.Register;
       Output_Format.Register;
       Get_Args.Register;
-      Reset.Register;
+
+      -- Action
+      Reset_Cmd.Register;
+      Stop_Cmd.Register;
+      Start_Cmd.Register;
+      Pause_Cmd.Register;
 
       -- Initialize algorithm with default values
       PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
@@ -291,12 +299,15 @@ package body Ecg_Sensor is
          Result := PanTompkins.Process_Sample (AdaData.Data (Sample_Index));
          Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1;
          
-         if Output_Format.Get_Value = OUT_ASCII then
-            Log (Sample_Index'Image & "," & Result'Image & CR_LF & CMD_END);
-         elsif Output_Format.Get_Value = FLOAT32 then
-            Transmit_Float_32 (Result);
-            Log (CMD_END & "");
-         end if;
+         case Output_Format.Get_Value is
+            when OUT_ASCII =>
+               Log (Sample_Index'Image & "," & Result'Image & CR_LF & CMD_END);
+            when FLOAT32 =>
+               Transmit_Float_32 (Result);
+               Log (CMD_END & "");
+            when others =>
+               null;
+         end case;
       end if;
    end Process_Sample;
 
@@ -307,7 +318,7 @@ package body Ecg_Sensor is
             Read_Command; -- Not Blocking
 
             case Current_State is
-               when SAMPLING =>
+               when RUNNING =>
                   Process_Sample;
                when others =>
                   null;

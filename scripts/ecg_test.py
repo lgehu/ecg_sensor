@@ -42,13 +42,14 @@ if __name__ == "__main__":
         ser.reset_output_buffer()
       
         send_command(ser, "RESET")
-        send_command(ser, "SAMPLE_RATE=100")
+        send_command(ser, "SAMPLE_RATE=1000")
         send_command(ser, "OUTPUT_FORMAT=FLOAT32")
         send_command(ser, "SET_STATE=SAMPLING")
 
-        time.sleep(5)
+        time.sleep(2)
 
         send_command(ser, "RESET")
+        send_command(ser, "GET_ARGS")
 
         # for i in range(5):
         #     ser.read_until(";")

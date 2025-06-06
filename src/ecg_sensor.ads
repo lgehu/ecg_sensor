@@ -6,6 +6,6 @@ package Ecg_Sensor is
    procedure Update_Blocking;
 
    private
-      function Valide_State (Input : Commands_Interpreter.Argument) return Boolean;
+      procedure Change_State (Input : Commands_Interpreter.Argument; Valid : Boolean);
 
 end Ecg_Sensor;
