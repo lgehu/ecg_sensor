@@ -55,8 +55,7 @@ package body Ecg_Sensor is
    end;
 
    procedure Reset_Sensor (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
-      SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#),
-                                 Volatile;
+   SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#), Volatile;
    begin
       Send_Command ("OK");
       SCB_AIRCR := 16#05FA0004#;
@@ -73,14 +72,12 @@ package body Ecg_Sensor is
 
       Log ("<");
       if Cmd_Str.Length (User_Input.Value) > 0 then
-         Log (Cmd_Str.To_String (
-               Commands_Interpreter.Find_Arg (
-                     Cmd_Str.To_String (User_Input.Value), Index).Value));
+         Log (Commands_Interpreter.Get_Value (Cmd_Str.To_String (User_Input.Value)));
       else
          for I in Args'Range loop
             -- Print key=value
             Log (Cmd_Str.To_String (Args (I).Key) & "=" & 
-                  Cmd_Str.To_String (Args (I).Value) & CR_LF);
+                  Args (I).To_String.all & CR_LF);
          end loop;
       end if;
       Log (">");
@@ -240,6 +237,8 @@ package body Ecg_Sensor is
       COM.Enable_Interrupt;
       
       UART_USB.Transmit_String ("ECG_SENSOR v0.1" & CR_LF & CMD_END);
+
+      -- Log (Commands_Interpreter.Abstract_Argument'Object_Size'Image);
 
       -- Parameters
       Amplitude_Coef.Register;

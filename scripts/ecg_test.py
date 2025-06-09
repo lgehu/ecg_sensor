@@ -41,7 +41,7 @@ def wait_response(ser : Serial):
     print("<" + data.decode(errors="ignore"))
 
 def log(ser : Serial):
-    while True:
+    while True: 
         if ser.in_waiting > 0:
             wait_response(ser)
         else:

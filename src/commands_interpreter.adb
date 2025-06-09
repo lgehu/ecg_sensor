@@ -1,5 +1,6 @@
 with Ada.Strings.Bounded; use Ada.Strings.Bounded;
 with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 with Ada.Strings.Search;
 with Commands_Interpreter;
 with UART_USB;
@@ -7,21 +8,22 @@ with Ada.Numerics;
 
 package body Commands_Interpreter is
 
-   type Check_Array is array (1 .. Max_Arg) of access function (Input : Argument) return Boolean;
+ 
+   Arg_Pool : Arg_Array (1 .. Max_Arg);
 
-   Arg_Pool : Arg_Array(1 .. Max_Arg) := ( others => (Key => Command_String.Null_Bounded_String,
-                                                      Value => Command_String.Null_Bounded_String,
-                                                      Default => Command_String.Null_Bounded_String,
-                                                      Is_Valid => null,
-                                                      Do_Action => null));
+   --  Arg_Pool : Arg_Array(1 .. Max_Arg) := ( others => (Key => Command_String.Null_Bounded_String,
+   --                                                     Value => Command_String.Null_Bounded_String,
+   --                                                     Default => Command_String.Null_Bounded_String,
+   --                                                     Is_Valid => null,
+   --                                                     Do_Action => null));
 
    Arg_Len : Natural := 0;
 
    function Parse(Input: String; Delimiter : Character := '=') return Argument is
       Bounded_Input : Cmd_Str := Command_String.To_Bounded_String (Input);
       Equal_Pos : Natural := Command_String.Index (Bounded_Input, Delimiter & "", 1);
-      Tmp, Arg : Argument;
-      Find_Arg_Index : Natural := 0;
+      Tmp : Argument;
+      Arg_Index : Natural := 0;
       Cmd_Type : Command_Type; 
    begin
       
@@ -39,44 +41,44 @@ package body Commands_Interpreter is
          Tmp.Value := Command_String.Bounded_Slice(Bounded_Input, Equal_Pos + 1, Input'Length);
       end if; 
 
-      Arg := Find_Arg (Command_String.To_String (Tmp.Key), Find_Arg_Index);
-      
-      if Cmd_Type = PARAMETER then
+      Arg_Index := Get_Index (Command_String.To_String (Tmp.Key));
 
+      if Cmd_Type = PARAMETER then
          -- Reset to default value if no value is provided (Ex : ARG=;)
          if Command_String.Length (Tmp.Value) = 0 then
-            Arg_Pool (Find_Arg_Index).Value := Arg.Default;
-            Arg.Do_Action (Tmp, True);
-         elsif Arg.Is_Valid (Tmp) then -- Update value if format is valid
-            Arg_Pool (Find_Arg_Index).Value := Tmp.Value;
-            Arg.Do_Action (Tmp, True);
-         else -- Value is invalid
-            Arg.Do_Action (Tmp, False);
+            Arg_Pool (Arg_Index).Restore.all;
+            Arg_Pool (Arg_Index).Do_Action (Tmp, True);
+         else
+            begin
+               -- Try to update value
+               Arg_Pool (Arg_Index).Update_Value (Command_String.To_String (Tmp.Value));
+               Arg_Pool (Arg_Index).Do_Action (Tmp, True);
+            exception 
+               when Constraint_Error =>
+                  Arg_Pool (Arg_Index).Do_Action (Tmp, False);
+            end;
          end if;
-
       else -- No value is provided, perform an action only
-         if Arg.Do_Action /= null then
-            Arg.Do_Action (Tmp, True);
-         end if;
+         Arg_Pool (Arg_Index).Do_Action (Tmp, True);
       end if;
       
-      return Arg;
+      return Tmp;
    end Parse;
 
-   function Find_Arg (Key : String; Index : out Natural) return Argument is
+   function Get_Index (Key : String) return Natural is
    begin
       for I in 1 .. Arg_Len loop
          if Command_String.To_String(Arg_Pool (I).Key) = Key then
-            Index := I;
-            return Arg_Pool (I);
+            return I;
          end if;
       end loop;
       raise Commands_Exception with "Argument " & Key & " not found";
-   end Find_Arg;
+   end Get_Index;
 
    function Exist (Key : String) return Boolean is
    begin
-      for I in Arg_Pool'Range loop
+      UART_USB.Transmit_String (Key & ASCII.CR & ASCII.LF);
+      for I in 1 .. Arg_Len loop
          if Command_String.To_String(Arg_Pool (I).Key) = Key then
             return True;
          end if;
@@ -84,18 +86,17 @@ package body Commands_Interpreter is
       return False;
    end;
 
+   function Get_Value (Key : String) return String is
+   Index : Natural := Get_Index (Key);
+   begin
+      return Arg_Pool (Index).To_String.all;
+   end Get_Value;
+
    package body Arg_Accessor is
       
+      -- Arg : access Concrete_Argument'Class := null;
+      -- Fast access
       Arg_Index : Natural := 0;
-
-      function Check (Input : Argument) return Boolean is
-      begin
-         if Is_Valid = null then
-            return True;
-         else
-            return Is_Valid (Input);
-         end if;
-      end Check;
 
       procedure Execute_Action (Input : Argument; Valid : Boolean) is
       begin
@@ -110,11 +111,38 @@ package body Commands_Interpreter is
             raise Commands_Exception with "Argument is not registered";
          end if;
       end Check_Registered;
+   
+      procedure Update_Value (Input : String) is
+      begin
+         Check_Registered;
+         declare
+            Arg : access Concrete_Argument'Class := Concrete_Argument (Arg_Pool (Arg_Index).all)'Access;
+         begin
+            if To_Value /= null then
+               Arg.Value := To_Value (Input);
+            end if;
+         end;
+      end Update_Value;
+
+      procedure Restore is
+      begin
+         Check_Registered;
+         declare
+            Arg : Concrete_Argument'Class := Concrete_Argument (Arg_Pool (Arg_Index).all);
+         begin
+            Arg.Value := Default_Value;
+         end;
+      end Restore;
 
       function Is_Registered return Boolean is
       begin
          return Arg_Index /= 0;
       end Is_Registered;
+
+      function To_String return String is
+      begin
+         return Get_Value'Image;
+      end To_String;
 
       procedure Register is
          Index : Natural;
@@ -127,11 +155,12 @@ package body Commands_Interpreter is
          else
             Arg_Len := Arg_Len + 1;
             Arg_Index := Arg_Len;
-            Arg_Pool(Arg_Len) :=  (Key        => Command_String.To_Bounded_String (Key),
-                                    Value     => Command_String.To_Bounded_String (Default_Value'Image),
-                                    Default   => Command_String.To_Bounded_String (Default_Value'Image), 
-                                    Is_Valid  => Check 'Access,
-                                    Do_Action => Execute_Action'Access);
+            Arg_Pool(Arg_Len) := new Concrete_Argument'(Key => Command_String.To_Bounded_String (Key), 
+                                                         Value => Default_Value,
+                                                         To_String => To_String'Access,
+                                                         Restore => Restore'Access,
+                                                         Do_Action => Execute_Action'Access,
+                                                         Update_Value => Update_Value'Access);
          end if;
 
       end Register;
@@ -139,41 +168,32 @@ package body Commands_Interpreter is
       procedure Set_Value (Value : T) is 
       begin
          Check_Registered;
-         Arg_Pool (Arg_Index).Value := Command_String.To_Bounded_String (Value'Image);
+         Arg_Pool (Arg_Index).Update_Value (Value'Image);
       end;
-
-      function Get_Arg return Argument is
-      begin
-         Check_Registered;
-         return Arg_Pool (Arg_Index);
-      end Get_Arg;
-
-      function Get_Raw return Cmd_Str is
-      begin
-         Check_Registered;
-         return Arg_Pool (Arg_Index).Value;
-      end Get_Raw;
 
       function Get_Default return T is
       begin
          return Default_Value;
       end Get_Default;
 
+      function Get_Value return T is
+      begin
+         Check_Registered;
+         declare
+            Arg : Concrete_Argument'Class := Concrete_Argument (Arg_Pool (Arg_Index).all);
+         begin
+            return Arg.Value;
+         end;
+      end Get_Value;
+
    end Arg_Accessor;
 
    package body Discrete_Accessor is
 
-      function Is_Valid (Input : Argument) return Boolean is
-      Dummy : T;
+      function To_Value (Input : String) return T is
       begin
-         begin
-            Dummy := T'Value (Command_String.To_String (Input.Value));
-            return true;
-         exception
-            when C : Constraint_Error =>
-               return false;
-         end;
-      end;
+         return T'Value (Input);
+      end To_Value;
 
       procedure Register is
       begin
@@ -182,43 +202,46 @@ package body Commands_Interpreter is
 
       function Get_Value return T is
       begin
-         return T'Value (Command_String.To_String (Accessor.Get_Raw));
+         return Accessor.Get_Value;
       end Get_Value;
 
    end Discrete_Accessor;
 
    package body Real_Accessor is
 
-      function Is_Valid (Input : Argument) return Boolean is
-      Dummy : T;
+      function To_Value (Input : String) return T is
       begin
-         begin
-            Dummy := T'Value (Command_String.To_String (Input.Value));
-            return true;
-         exception
-            when C : Constraint_Error =>
-               return false;
-         end;
-      end;
+         return T'Value (Input);
+      end To_Value;
 
       procedure Register is
       begin
          Accessor.Register;
       end Register;
-      
+
       function Get_Value return T is
       begin
-         return T'Value (Command_String.To_String (Accessor.Get_Raw));
+         return Accessor.Get_Value;
       end Get_Value;
-
+      
    end Real_Accessor;
 
    package body Action_Accessor is 
+
+      function To_Value (Input : String) return Boolean is
+      begin
+         return False;
+      end To_Value;
       
       function Is_Valid (Arg : Argument) return Boolean is
       begin
          return False;
       end;
+
+      function To_String return String is
+      begin
+         return "";
+      end To_String;
       
       procedure Register is 
       begin

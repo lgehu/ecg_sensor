@@ -19,23 +19,34 @@ package Commands_Interpreter is
    type Command_Type is (ACTION, PARAMETER);
 
    type Argument is record 
-      Key       : Cmd_Str                                              := Command_String.Null_Bounded_String;
-      Value     : Cmd_Str                                              := Command_String.Null_Bounded_String;   -- Current stored value
-      Default   : Cmd_Str                                              := Command_String.Null_Bounded_String;   -- Default Value
-      Is_Valid  : access function (User_Input : Argument) return Boolean    := null; -- Call when a value is provided
-      Do_Action : access procedure (User_Input : Argument; Valid : Boolean) := null; -- Always called 
+      Key   : Cmd_Str := Command_String.Null_Bounded_String;
+      Value : Cmd_Str := Command_String.Null_Bounded_String;   -- Current stored value
    end record;
 
-   type Arg_Array is array (Natural range <>) of Argument;
+   type Abstract_Argument is abstract tagged record
+      Key          : Cmd_Str;
+      To_String    : access function return String;
+      Restore      : access procedure;
+      Update_Value : access procedure (Input : String);
+      Do_Action    : access procedure (Input : Argument; Valid : Boolean);
+   end record; 
+
+   type Arg_Access is access all Abstract_Argument'Class;
+   
+   type Arg_Array is array (Positive range <>) of Arg_Access;
    
    -- Generic parameter or action builder
    generic
-      type T (<>) is private;
+      type T is private;
       Key : String;
       Default_Value : T;
-      Is_Valid : access function (Input : Argument) return Boolean;
       Do_Action : access procedure (Input : Argument; Valid : Boolean);
+      To_Value : access function (Input : String) return T;
    package Arg_Accessor is
+
+      type Concrete_Argument is new Abstract_Argument with record
+         Value : T;
+      end record;
 
       procedure Register;
 
@@ -43,11 +54,12 @@ package Commands_Interpreter is
 
       function Is_Registered return Boolean;
 
-      function Get_Arg return Argument;
-
-      function Get_Raw return Cmd_Str;
-
       function Get_Default return T;
+
+      function Get_Value return T;
+
+      -- Set current value to default value
+      procedure Restore; 
 
    end Arg_Accessor;
 
@@ -58,20 +70,22 @@ package Commands_Interpreter is
       Default_Value : T;
       Action_Fn: access procedure (Arg : Argument; Valid : Boolean);
    package Discrete_Accessor is 
-   
-      function Is_Valid (Input : Argument) return Boolean;
+
+      function To_Value (Input : String) return T;
+
+      --  function To_String return String;
+
+      function Get_Value return T;
 
       package Accessor is new Arg_Accessor (T => T, 
                                            Key => Key,
                                            Default_Value => Default_Value, 
-                                           Is_Valid => Is_Valid'Access,
-                                           Do_Action => Action_Fn
+                                           Do_Action => Action_Fn,
+                                           To_Value => To_Value'Access
                                            );
       use Accessor;
 
       procedure Register;
-
-      function Get_Value return T;
 
    end Discrete_Accessor;
 
@@ -83,19 +97,20 @@ package Commands_Interpreter is
       Action_Fn : access procedure (Arg : Argument; Valid : Boolean);
    package Real_Accessor is 
 
-      function Is_Valid (Input : Argument) return Boolean;
+      function To_Value (Input : String) return T;
 
       package Accessor is new Arg_Accessor (T => T, 
-         Key => Key, 
-         Default_Value => Default_Value, 
-         Is_Valid => Is_Valid'Access,
-         Do_Action => Action_Fn);
+                                             Key => Key, 
+                                             Default_Value => Default_Value, 
+                                             Do_Action => Action_Fn,
+                                             To_Value => To_Value'Access
+                                             );
       use Accessor;
+
+      function Get_Value return T;
 
       procedure Register;
       
-      function Get_Value return T;
-
    end Real_Accessor;
 
    -- Handle an action, no value need to be provided.
@@ -106,27 +121,38 @@ package Commands_Interpreter is
 
       function Is_Valid (Arg : Argument) return Boolean;
 
+      function To_Value (Input : String) return Boolean;
+
+      function To_String return String;
+
       package Accessor is new Arg_Accessor (T => Boolean, 
          Key => Key, 
          Default_Value => False, 
-         Is_Valid => null,
-         Do_Action => Action_Fn);
+         Do_Action => Action_Fn,
+         To_Value => To_Value'Access
+         );
+
       use Accessor;
 
       procedure Register;
 
    end Action_Accessor;
 
-   function Parse(Input : String; Delimiter : Character := '=') return Argument; 
+   
 
-   function Find_Arg (Key : String; Index : out Natural) return Argument;
+   function Parse(Input : String; Delimiter : Character := '=') return Argument; 
 
    function Exist (Key : String) return Boolean;
 
    function Get_Arg_Count return Natural;
 
+   function Get_Value (Key : String) return String;
+
    -- Doesn't work with array slice when exceding 3 values . Is a stack error ? No exception is thrown
    -- Old version is: return Arg_Pool ( 1 .. Arg_Len);
    procedure Get_Args (Output : out Arg_Array);
+
+   private 
+      function Get_Index (Key : String) return Natural;
 
 end Commands_Interpreter;
