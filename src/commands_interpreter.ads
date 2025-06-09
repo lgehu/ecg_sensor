@@ -138,8 +138,6 @@ package Commands_Interpreter is
 
    end Action_Accessor;
 
-   
-
    function Parse(Input : String; Delimiter : Character := '=') return Argument; 
 
    function Exist (Key : String) return Boolean;

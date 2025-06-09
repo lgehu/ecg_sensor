@@ -10,13 +10,6 @@ package body Commands_Interpreter is
 
  
    Arg_Pool : Arg_Array (1 .. Max_Arg);
-
-   --  Arg_Pool : Arg_Array(1 .. Max_Arg) := ( others => (Key => Command_String.Null_Bounded_String,
-   --                                                     Value => Command_String.Null_Bounded_String,
-   --                                                     Default => Command_String.Null_Bounded_String,
-   --                                                     Is_Valid => null,
-   --                                                     Do_Action => null));
-
    Arg_Len : Natural := 0;
 
    function Parse(Input: String; Delimiter : Character := '=') return Argument is
@@ -24,7 +17,8 @@ package body Commands_Interpreter is
       Equal_Pos : Natural := Command_String.Index (Bounded_Input, Delimiter & "", 1);
       Tmp : Argument;
       Arg_Index : Natural := 0;
-      Cmd_Type : Command_Type; 
+      Cmd_Type : Command_Type;
+      Arg : Arg_Access;
    begin
       
       if Input = "" then
@@ -42,24 +36,29 @@ package body Commands_Interpreter is
       end if; 
 
       Arg_Index := Get_Index (Command_String.To_String (Tmp.Key));
+      Arg := Arg_Pool (Arg_Index);
+
+      if Arg = null then 
+         return Tmp;
+      end if;
 
       if Cmd_Type = PARAMETER then
          -- Reset to default value if no value is provided (Ex : ARG=;)
          if Command_String.Length (Tmp.Value) = 0 then
-            Arg_Pool (Arg_Index).Restore.all;
-            Arg_Pool (Arg_Index).Do_Action (Tmp, True);
+            Arg.Restore.all;
+            Arg.Do_Action (Tmp, True);
          else
             begin
                -- Try to update value
-               Arg_Pool (Arg_Index).Update_Value (Command_String.To_String (Tmp.Value));
-               Arg_Pool (Arg_Index).Do_Action (Tmp, True);
+               Arg.Update_Value (Command_String.To_String (Tmp.Value));
+               Arg.Do_Action (Tmp, True);
             exception 
                when Constraint_Error =>
-                  Arg_Pool (Arg_Index).Do_Action (Tmp, False);
+                  Arg.Do_Action (Tmp, False);
             end;
          end if;
       else -- No value is provided, perform an action only
-         Arg_Pool (Arg_Index).Do_Action (Tmp, True);
+         Arg.Do_Action (Tmp, True);
       end if;
       
       return Tmp;

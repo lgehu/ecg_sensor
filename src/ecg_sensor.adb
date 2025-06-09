@@ -238,8 +238,6 @@ package body Ecg_Sensor is
       
       UART_USB.Transmit_String ("ECG_SENSOR v0.1" & CR_LF & CMD_END);
 
-      -- Log (Commands_Interpreter.Abstract_Argument'Object_Size'Image);
-
       -- Parameters
       Amplitude_Coef.Register;
       Sample_Rate.Register;
@@ -247,9 +245,9 @@ package body Ecg_Sensor is
       Window_Sec.Register;
       Output_Stage.Register;
       Output_Format.Register;
-      Get_Args.Register;
 
       -- Action
+      Get_Args.Register;
       Reset_Cmd.Register;
       Stop_Cmd.Register;
       Start_Cmd.Register;
