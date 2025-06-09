@@ -3,6 +3,9 @@ from serial import Serial
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
+from prompt_toolkit import PromptSession
+from prompt_toolkit.patch_stdout import patch_stdout 
+import threading
 import time
 
 def read_float_32(ser : Serial) -> float:
@@ -28,14 +31,25 @@ def send_command(ser : Serial, cmd : str):
     ser.reset_output_buffer()
     ser.write(("<"+cmd+">").encode())
     ser.flush()
-    while not ser.readable:
-        pass
-    wait_response(ser)
+    #while not ser.readable:
+    #   pass
+    #wait_response(ser)
 
 def wait_response(ser : Serial):
     ser.read_until("<".encode())[:-1]
     data = ser.read_until(">".encode())[:-1]
     print("<" + data.decode(errors="ignore"))
+
+def log(ser : Serial):
+    while True:
+        if ser.in_waiting > 0:
+            wait_response(ser)
+        else:
+            time.sleep(0.1)
+        #data = ''
+        #while data == '':
+        #    data = ser.read(1)
+        #print(data.decode(errors="ignore"), end="", flush=True)
 
 if __name__ == "__main__":
     # Open port (Linux only)
@@ -43,6 +57,20 @@ if __name__ == "__main__":
         ser.reset_input_buffer()
         ser.reset_output_buffer()
       
-        while True:
-            user_input = input(">")
-            send_command(ser, user_input.upper())
+        session = PromptSession()
+        threading.Thread(target=log, args=(ser,), daemon=True).start()
+        
+        run = True
+
+        while run:
+            with patch_stdout():
+                while True:
+                    try:
+                        user_input = session.prompt(">").upper()
+                        send_command(ser, user_input)
+                    except KeyboardInterrupt:
+                        print("Terminating...")
+                        run = False
+                        break
+
+

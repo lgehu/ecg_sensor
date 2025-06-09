@@ -8,6 +8,7 @@ with Interfaces; use Interfaces;
 with HAL; use HAL;
 with HAL.UART; use HAL.UART;
 
+with Peripherals; use Peripherals;
 with UART_USB;
 with PanTompkins;
 with AdaData;
@@ -18,8 +19,6 @@ package body Ecg_Sensor is
    -- TODO: Add parameter for input channel and output channel selection
    -- TODO: Command to acquire an arbitrary ammount of sample (ACQUIRE=100)
    -- TODO: Documentation for commands and interpreter
-
-   COM : UART_USB.Controller (5000, '<', '>');
 
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;

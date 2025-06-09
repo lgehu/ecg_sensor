@@ -50,7 +50,7 @@ package UART_USB is
       type T is private;
    procedure Write(Data : T; Format : Endianness; Status : out UART_Status);
    
-   protected type Controller (Timeout_Ms : Natural; Start_Char : Character ; Terminator : Character) is
+   protected type Controller (Device : access USART;  IRQ : Interrupt_ID; Timeout_Ms : Natural; Start_Char : Character ; Terminator : Character) is
      
       procedure Enable_Interrupt;
    
@@ -64,7 +64,7 @@ package UART_USB is
 
       procedure Handle_Reception;
    
-      procedure IRQ_Handler with Attach_Handler => USART2_Interrupt;
+      procedure IRQ_Handler with Attach_Handler => IRQ;
   
       Raw_Input : UART_String; -- Buffer to store incoming commands
 

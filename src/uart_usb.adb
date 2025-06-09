@@ -1,16 +1,13 @@
 with STM32.GPIO;    use STM32.GPIO;
 with STM32.Device;  use STM32.Device;
 with Ada.Unchecked_Conversion;
+with Peripherals; use Peripherals;
 
 package body UART_USB is
 
-   TX_Pin : constant GPIO_Point := PA2;
-   RX_Pin : constant GPIO_Point := PA3;
-   USARTz : USART renames USART_2;
-
    procedure Initialize(Baudrate: Baud_Rates := 9600) is 
    begin
-      Enable_Clock (USARTz);
+      Enable_Clock (Transceiver);
       Enable_Clock (RX_Pin & TX_Pin);
 
       Configure_IO
@@ -21,16 +18,16 @@ package body UART_USB is
           AF_Speed       => Speed_50MHz,
           AF_Output_Type => Push_Pull));
 
-      Disable (USARTz);
+      Disable (Transceiver);
 
-      Set_Baud_Rate    (USARTz, Baudrate);
-      Set_Mode         (USARTz, Tx_Rx_Mode);
-      Set_Stop_Bits    (USARTz, Stopbits_1);
-      Set_Word_Length  (USARTz, Word_Length_8);
-      Set_Parity       (USARTz, No_Parity);
-      Set_Flow_Control (USARTz, No_Flow_Control);
+      Set_Baud_Rate    (Transceiver, Baudrate);
+      Set_Mode         (Transceiver, Tx_Rx_Mode);
+      Set_Stop_Bits    (Transceiver, Stopbits_1);
+      Set_Word_Length  (Transceiver, Word_Length_8);
+      Set_Parity       (Transceiver, No_Parity);
+      Set_Flow_Control (Transceiver, No_Flow_Control);
 
-      Enable (USARTz);
+      Enable (Transceiver);
    end Initialize;
 
  procedure Read_Blocking 
@@ -40,8 +37,8 @@ package body UART_USB is
       Start_Time : constant Time := Clock;
    begin
       loop 
-         if Rx_Ready (USARTz) then
-            Receive (USARTz, Data);
+         if Rx_Ready (Transceiver) then
+            Receive (Transceiver, Data);
             Status := HAL.UART.Ok;
             exit;
          elsif (Clock - Start_Time) > Timeout then
@@ -58,8 +55,8 @@ package body UART_USB is
       Start_Time : constant Time := Clock;
    begin
       loop 
-         if Tx_Ready (USARTz) then
-            Transmit (USARTz, Data);
+         if Tx_Ready (Transceiver) then
+            Transmit (Transceiver, Data);
             Status := HAL.UART.Ok;
             exit;
          elsif (Clock - Start_Time) > Timeout then
@@ -147,14 +144,14 @@ package body UART_USB is
 
       procedure Enable_Interrupt is
       begin
-         Enable_Interrupts (USARTz, source => Received_Data_Not_Empty);
+         Enable_Interrupts (Device.all, source => Received_Data_Not_Empty);
          Is_Data := False;
          Raw_Input := Null_Bounded_String;
       end Enable_Interrupt;
 
       procedure Disable_Interrupt is
       begin
-         Disable_Interrupts (USARTz, source => Received_Data_Not_Empty);
+         Disable_Interrupts (Device.all, source => Received_Data_Not_Empty);
          Is_Data := False;
       end Disable_Interrupt;
 
@@ -169,7 +166,7 @@ package body UART_USB is
       end Get_Data;
 
       procedure Handle_Reception is 
-      Received_Char : constant Character := Character'Val (Current_Input (USARTz));
+      Received_Char : constant Character := Character'Val (Current_Input (Device.all));
       begin
          case Command_State is
             when WAITING =>
@@ -186,10 +183,10 @@ package body UART_USB is
 
                   -- Disable UART while command is not processed
                   loop
-                     exit when not Status (USARTz, Read_Data_Register_Not_Empty);
+                     exit when not Status (Device.all, Read_Data_Register_Not_Empty);
                   end loop;
 
-                  Disable_Interrupts (USARTz, Source => Received_Data_Not_Empty);
+                  Disable_Interrupts (Device.all, Source => Received_Data_Not_Empty);
                   Is_Data := True;
 
                else
@@ -209,11 +206,11 @@ package body UART_USB is
       procedure IRQ_Handler is
       begin
          --  check for data arrival
-         if Status (USARTz, Read_Data_Register_Not_Empty) and
-            Interrupt_Enabled (USARTz, Received_Data_Not_Empty)
+         if Status (Device.all, Read_Data_Register_Not_Empty) and
+            Interrupt_Enabled (Device.all, Received_Data_Not_Empty)
          then
             Handle_Reception;
-            Clear_Status (USARTz, Read_Data_Register_Not_Empty);
+            Clear_Status (Device.all, Read_Data_Register_Not_Empty);
          end if;
       end IRQ_Handler;
 
