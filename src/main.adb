@@ -1,14 +1,16 @@
 with Ecg_Sensor;
-with UART_USB;
+with Peripherals; use Peripherals;
 with Ada.Exceptions; use Ada.Exceptions; 
+with UART_USB; use UART_USB;
 
 procedure Main is
 begin
+   USBCOM.Initialize (115_200);
    begin
       Ecg_Sensor.Initialize;
       Ecg_Sensor.Update_Blocking;
    exception
       when E : Constraint_Error =>
-         UART_USB.Transmit_String (Exception_Message (E));
+         Transmit_String (USBCOM, Exception_Message (E));
    end;
 end Main;

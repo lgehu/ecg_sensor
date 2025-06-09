@@ -76,7 +76,6 @@ package body Commands_Interpreter is
 
    function Exist (Key : String) return Boolean is
    begin
-      UART_USB.Transmit_String (Key & ASCII.CR & ASCII.LF);
       for I in 1 .. Arg_Len loop
          if Command_String.To_String(Arg_Pool (I).Key) = Key then
             return True;

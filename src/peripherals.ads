@@ -7,8 +7,8 @@ with Ada.Interrupts.Names; use Ada.Interrupts.Names;
 
 package Peripherals is
    
-   TX_Pin : constant GPIO_Point := PA2;
-   RX_Pin : constant GPIO_Point := PA3;
+   TX_Pin : aliased GPIO_Point := PA2;
+   RX_Pin : aliased GPIO_Point := PA3;
    
    Transceiver : USART renames USART_2;
 
@@ -16,6 +16,10 @@ package Peripherals is
 
    Transceiver_AF : constant STM32.GPIO_Alternate_Function := GPIO_AF_USART1_7;
 
-   COM : UART_USB.Controller (Transceiver'Access, Transceiver_Interrupt_Id, 5000, '<', '>');
+   USBCOM : UART_USB.Controller (TX_Pin'Access, 
+                              RX_Pin'Access, 
+                              Transceiver'Access,
+                              Transceiver_Interrupt_Id, 
+                              5000, '<', '>');
 
 end Peripherals;

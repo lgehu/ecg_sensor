@@ -24,34 +24,21 @@ package UART_USB is
    type Endianness is (BIG_ENDIAN, LITTLE_ENDIAN); 
 
    type Command_Read_State is (WAITING, PARSING);
-
-   procedure Initialize(Baudrate: Baud_Rates := 9600);
-
-   procedure Read_Blocking
-      (Data : out UInt9;
-      Status: out UART_Status; 
-      Timeout : Time_Span := Seconds (1));
-
-   procedure Put_Blocking 
-      (Data : UInt9; 
-      Status: out UART_Status;
-      Timeout : Time_Span := Seconds (1)) ;
-
-   function Read16(Status: out UART_Status) return Int16;
-   procedure Write16(Data: Int16; Status : out UART_Status);
-
-   procedure Transmit_String (Data: String);
-
-   function Receive_String (
-      Delimiter: Character := ASCII.NUL;
-      Timeout : Time_Span := Seconds (1)) return UART_String;
-
-   generic 
-      type T is private;
-   procedure Write(Data : T; Format : Endianness; Status : out UART_Status);
    
-   protected type Controller (Device : access USART;  IRQ : Interrupt_ID; Timeout_Ms : Natural; Start_Char : Character ; Terminator : Character) is
-     
+   protected type Controller (TX : access GPIO_Point ; RX : access GPIO_Point ; Device : access USART;  IRQ : Interrupt_ID; Timeout_Ms : Natural; Start_Char : Character ; Terminator : Character) is
+
+      procedure Initialize(Baudrate: Baud_Rates := 9600);
+
+      procedure Read_Blocking
+         (Data : out UInt9;
+         Status: out UART_Status; 
+         Timeout : Time_Span := Seconds (1));
+
+      procedure Put_Blocking 
+         (Data : UInt9; 
+         Status: out UART_Status;
+         Timeout : Time_Span := Seconds (1)) ;
+
       procedure Enable_Interrupt;
    
       procedure Disable_Interrupt;
@@ -75,5 +62,17 @@ package UART_USB is
       Is_Data : Boolean := False;
 
    end Controller;
+
+   generic 
+      type T is private;
+   procedure Write(This : in out Controller ; Data : T ; Format : Endianness; Status : out UART_Status);
+
+   procedure Transmit_String (This : in out Controller ; Data: String);
+
+   function Receive_String (This : in out Controller ; Delimiter : Character := ASCII.NUL; Timeout : Time_Span := Seconds (1)) return UART_String;
+
+   function Read16(This : in out Controller ; Status : out UART_Status) return Int16;
+
+   procedure Write16(This : in out Controller ; Data: Int16 ; Status: out UART_Status);
 
 end UART_USB;
