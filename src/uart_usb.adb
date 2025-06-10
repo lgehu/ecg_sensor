@@ -119,7 +119,6 @@ package body UART_USB is
                   if (Length (Raw_Input) + 1) >= Max_Length or
                      (Clock - Last_Char_Time) > To_Time_Span(5.0) then
                      Command_State := WAITING;
-                     -- Throw error
                   else
                      Append (Raw_Input, Received_Char);
                      Last_Char_Time := Clock;

@@ -7,7 +7,6 @@ with UART_USB;
 with Ada.Numerics;
 
 package body Commands_Interpreter is
-
  
    Arg_Pool : Arg_Array (1 .. Max_Arg);
    Arg_Len : Natural := 0;
@@ -260,6 +259,5 @@ package body Commands_Interpreter is
    begin
       return Arg_Len;
    end;
-
 
 end Commands_Interpreter;

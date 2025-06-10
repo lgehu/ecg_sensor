@@ -43,8 +43,18 @@ package UART_USB is
    
       procedure Disable_Interrupt;
 
+      -- True when a message is received. Interrupt is disable until user
+      -- manually re-enable it. Flag is cleared when calling Enable_Interrupt.
+      -- Ex: 
+      -- if Has_Data then
+      --    data := Get_Data;
+      --    Do stuff ..
+      --    Enable_Interrupt;
+      -- end if;
       function Has_Data return Boolean;
 
+      -- Return the current message stored in the buffer. It is cleared when 
+      -- Enable_Interrupt is called.
       function Get_Data return UART_String;
    
    private

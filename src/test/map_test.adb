@@ -6,7 +6,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with UART_USB; use UART_USB;
 
 
--- Map seems to not work
+-- Map seems to not work on STM32
 procedure Map_Test is
 
    M : Map;

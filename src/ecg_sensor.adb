@@ -20,7 +20,11 @@ package body Ecg_Sensor is
    -- TODO: Command to acquire an arbitrary ammount of sample (ACQUIRE=100)
    -- TODO: Documentation for commands and interpreter
    -- TODO: Add Unregister procedure 
-
+   -- TODO: Add this crate to the private alire index
+   -- TODO: Make a new crates of nucleof446re example
+   -- TODO: Add input and output channel (ADC, SPI ...)
+   -- TODO: Blink the LED to the Heart rate
+   
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
 
@@ -43,6 +47,11 @@ package body Ecg_Sensor is
    begin
       Log (USBCOM, "<" & Msg & ">");   
    end Send_Command;
+
+   procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
+   begin
+      Send_Command ("ECG_SENSOR " & ECG_VERSION);
+   end Send_Version;
 
    procedure Return_Arg (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
@@ -199,7 +208,6 @@ package body Ecg_Sensor is
    procedure Initialize is
    begin
       USBCOM.Enable_Interrupt;
-      Transmit_String (USBCOM, "ECG_SENSOR v0.1" & CR_LF);
 
       -- Parameters
       Amplitude_Coef.Register;
@@ -216,6 +224,7 @@ package body Ecg_Sensor is
       Start_Cmd.Register;
       Pause_Cmd.Register;
       Next_Cmd.Register;      
+      Version_Cmd.Register;
 
       -- Initialize algorithm with default values
       PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 

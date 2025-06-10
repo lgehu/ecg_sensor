@@ -24,6 +24,8 @@ package Ecg_Sensor is
 
       procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
+      procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
+
       package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Positive,
                   Key            => "SAMPLE_RATE",
                   Default_Value  => 100,
@@ -84,6 +86,11 @@ package Ecg_Sensor is
       package Next_Cmd is new Commands_Interpreter.Action_Accessor (
                   Key            => "NEXT",
                   Action_Fn      => Send_Next_Value'Access
+               );
+
+      package Version_Cmd is new Commands_Interpreter.Action_Accessor (
+                  Key            => "VERSION", 
+                  Action_Fn      => Send_Version'Access
                );
 
 end Ecg_Sensor;

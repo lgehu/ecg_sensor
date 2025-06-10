@@ -18,11 +18,13 @@ package Commands_Interpreter is
 
    type Command_Type is (ACTION, PARAMETER);
 
+   -- Argument coming from user input
    type Argument is record 
       Key   : Cmd_Str := Command_String.Null_Bounded_String;
-      Value : Cmd_Str := Command_String.Null_Bounded_String;   -- Current stored value
+      Value : Cmd_Str := Command_String.Null_Bounded_String;
    end record;
 
+   -- Argument stored in the argument pool
    type Abstract_Argument is abstract tagged record
       Key          : Cmd_Str;
       To_String    : access function return String;
@@ -35,7 +37,6 @@ package Commands_Interpreter is
    
    type Arg_Array is array (Positive range <>) of Arg_Access;
    
-   -- Generic parameter or action builder
    generic
       type T is private;
       Key : String;

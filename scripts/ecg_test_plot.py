@@ -12,7 +12,7 @@ if __name__ == "__main__":
         ecg_test.send_command(ser, "STOP", True)
         ecg_test.send_command(ser, "OUTPUT_FORMAT=OUT_ASCII", True)
         ecg_test.send_command(ser, "SAMPLE_RATE=800", True)
-        ecg_test.send_command(ser, "OUTPUT_STAGE=STAGE_DERIVATED", True)
+        ecg_test.send_command(ser, "OUTPUT_STAGE=STAGE_INTEGRATED", True)
         ecg_test.send_command(ser, "START", True)
 
         data = []
