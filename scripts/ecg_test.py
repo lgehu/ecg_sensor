@@ -24,32 +24,38 @@ def read_float_32(ser : Serial) -> float:
             data.extend(b)
     return struct.unpack ('>f', bytes(data))[0]
 
-def send_command(ser : Serial, cmd : str):
-    #print(">" + cmd)
+def send_command(ser : Serial, cmd : str, wait_ok : bool = False):
+    print(">" + cmd)
     ser.read_all()
     ser.reset_input_buffer()
     ser.reset_output_buffer()
-    ser.write(("<"+cmd+">").encode())
+    ser.write(("<"+cmd.upper()+">").encode())
     ser.flush()
-    #while not ser.readable:
-    #   pass
-    #wait_response(ser)
 
-def wait_response(ser : Serial):
-    ser.read_until("<".encode())[:-1]
-    data = ser.read_until(">".encode())[:-1]
-    print("<" + data.decode(errors="ignore"))
+    if wait_ok:
+        wait_response(ser, "OK")
+
+def wait_response(ser : Serial, msg : str | None = None):
+    response = ""
+    while response != msg:
+        ser.read_until("<".encode())[:-1]
+        data = ser.read_until(">".encode())[:-1]
+        
+        response = data.decode(errors="ignore")
+        print("<" + response)
+        
+        if msg == None:
+            break
+
+    return data
 
 def log(ser : Serial):
     while True: 
         if ser.in_waiting > 0:
-            wait_response(ser)
+            d = wait_response(ser)
         else:
             time.sleep(0.1)
-        #data = ''
-        #while data == '':
-        #    data = ser.read(1)
-        #print(data.decode(errors="ignore"), end="", flush=True)
+
 
 if __name__ == "__main__":
     # Open port (Linux only)

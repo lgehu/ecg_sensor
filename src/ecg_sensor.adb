@@ -57,6 +57,7 @@ package body Ecg_Sensor is
    SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#), Volatile;
    begin
       Send_Command ("OK");
+      delay 0.1;
       SCB_AIRCR := 16#05FA0004#;
       loop
          null; -- Wait reset
