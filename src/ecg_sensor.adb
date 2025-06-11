@@ -48,7 +48,7 @@ package body Ecg_Sensor is
 
    procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
    begin
-      Send_Command ("ECG_SENSOR " & ECG_VERSION);
+      Send_Command ("ECG_SENSOR v" & ECG_VERSION);
       LED_Ctrl.Start_Blinking;
    end Send_Version;
 
