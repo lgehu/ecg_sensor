@@ -21,9 +21,7 @@ package body Ecg_Sensor is
    -- TODO: Documentation for commands and interpreter
    -- TODO: Add Unregister procedure 
    -- TODO: Add this crate to the private alire index
-   -- TODO: Make a new crates of nucleof446re example
    -- TODO: Add input and output channel (ADC, SPI ...)
-   -- TODO: Blink the LED to the Heart rate
    
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;

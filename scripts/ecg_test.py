@@ -25,7 +25,7 @@ def read_float_32(ser : Serial) -> float:
     return struct.unpack ('>f', bytes(data))[0]
 
 def send_command(ser : Serial, cmd : str, wait_ok : bool = False):
-    print(">" + cmd)
+    #print(">" + cmd)
     ser.read_all()
     ser.reset_input_buffer()
     ser.reset_output_buffer()

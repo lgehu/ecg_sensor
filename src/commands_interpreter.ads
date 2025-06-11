@@ -2,8 +2,6 @@ with Ada.Strings; use Ada.Strings;
 with Ada.Strings.Bounded;
 with Interfaces;
 
--- TODO: Store argument in a record that store 2 functions: Is_Valid and Do_Action
--- The first check the validity of the input, the second one perform an action.
 package Commands_Interpreter is
 
    Max_Arg : constant Positive := 15;

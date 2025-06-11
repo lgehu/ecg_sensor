@@ -3,9 +3,9 @@ with Ada.Interrupts;       use Ada.Interrupts;
 with Ada.Interrupts.Names; use Ada.Interrupts.Names;
 with STM32.Timers;  use STM32.Timers;
 
--- Controller for blinking a LED using interruption
 package LED_Controller is
 
+   -- Controller for blinking a LED 3 times at a given frequency.
    protected type Controller (Timer_Source : access Timer ; Timer_Interrupt : Interrupt_ID ; GPIO : access GPIO_Point) is
 
       procedure Initialize;
