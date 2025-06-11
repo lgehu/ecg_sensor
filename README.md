@@ -2,12 +2,53 @@
 The goal is to virtualize a sensor in the STM32F446RE that can process ECG data to detect heart rate with the Pan-Tompkins algorithm.
 Data are transmit through UART with a python script, then, the MCU process the data in real time and should return the heart rate.
 
-## SCRIPTS ## 
+## SCRIPTS ##
+- ecg_com.py : Interactive command prompt that send and receive commands to the ECG Sensor. You must build the main program to communicate with the sensor.
+- ecg_plot.py : Example script that automatically configure the sensor and plot processed ecg signal. Works 
 - uart_test.py: Is intented for testing the UART and transmist signed integer on 16 bits.  
 - filters_proto.py: Is for testing algorithm of filter to be implemented on Ada.  
 - read_ecg_sensor.py: Read an ECG signal from the board and display it 
 - ecg_uart_test.py: Is for sending a whole ECG signal. 
 to_ada.py: Is for converting any file to an ada array
+
+## COMMANDS ##
+To exchange commands to the sensor, you first need to build the main project. Once, you can use any terminal program which support UART.  
+You can use screen or minicom on linux or termite on Windows. The easiest way would be to use the dedicated script "ecg_com" to send commands.  
+
+### Protocol ##
+The protocol is really simple and use ASCII format case sensitive. The caracteres '<' and '>' are start and terminating flags.  
+Every commands are stored in the board as a parameter on a KEY=VALUE format.
+A command can be either an action or a parameter depending on the formatting.
+Example:  
+Sending <GET_ARGS> without value return all commands and parameter registered in the board.  
+Sending <GET_ARGS=SAMPLE_RATE> return the current stored value linked to the key 'SAMPLE_RATE'.  
+Sending <SAMPLE_RATE=> with the sign '=' and without value reset the parameter to his default value.
+If the command is either misswritten or does not exist, the board respond with an error. 
+The command interpreter on the board side perform a type check on reception before storing the new value.  
+It mean that no value will be updated if you send a value of incorrect format or out of bounds. An error is sent on error.
+Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greater than 0) is expected.
+
+**General commands**    
+| Commands/Parameters |  Description  | Argument type
+| :---:               | ------------- | :---:   |    
+| GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String |
+| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode, the format is <float_value>. On binary mode, 4 bytes is sent in Big endian format. Each sample are separated with the caractere ';'. Thus, data can extra byte in case of escape value. | OUT_ASCII &#124; FLOAT32 |
+| RESET               | Restart the board | None |
+| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied. | None |  
+| STOP                | Stop automatic sampling. Reset the sample index to 0. | None |
+| PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
+| NEXT                | Request a single sample. No need to start sampling. | None |
+| VERSION             | Ask for the ecg version. | None |
+| SAMPLE_RATE         | Set the output frequency during the automatic sampling. | 0 < Integer_Value |
+
+**ECG commands**  
+ Commands/Parameters |  Description  | Argument type
+| :---:              | ------------- | :---:   |    
+| AMPLITUDE_COEF     | Set the multiplier for the amplitude threshold. This treshold is the mean of the integrated data during the Pan-Tompkins algorithm. | 0.0 < Float_Value < 2.0  |
+| PICK_DISTANCE      | Set the minimal time distance in second between to pick. | 0.0 < Float_Value |
+|  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value |
+| OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR |
+
 ## PREREQUISITES (Linux) ##
 You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
 ```bash
@@ -91,6 +132,7 @@ On the following picture, the first one is an ECG signal processed by the python
 The next one is the same ECG signal processed by the Ada implementation. We can see similar results: No false positive, same picks number and detected on the same time.
 However, amplitude are different because lowpass and highpass are IIR functions instead of butterworth. Thus, gain response are not the same. 
 ![ada-algo](https://github.com/user-attachments/assets/8a5ad799-4a83-48e4-911f-79fcc074056d)  
+
 ## How to use
 Here is the following script and command we used to get the precedent results.  
 First, transform an ECG signal into an ada array: `python3 scripts/to_ada.py physionet.org/files/ptb-xl/1.0.3/records100/00000/00001_lr src/ecgdata.ads ECGData --wfdb`  
@@ -98,7 +140,7 @@ Next, compile the program and flash it: `make PRJ_NAME=ecg_test`
 If you only want the raw data outputted by the board, use: `make PRJ_NAME=ecg_script_test`  
 It will send the raw signal casted to Int16 through UART.  
 Then, execute the python script to display the result: `python3 scripts/read_ecg_sensor.py`  
-You can restart the board, it will send the data in a singleshot.  
+You can restart the board, it will send the data in a singleshot.
 
 # TODO #
 - [x] Implement the Pan-Tompkins algorithm
