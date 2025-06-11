@@ -83,8 +83,9 @@ package Ecg_Sensor is
                   Action_Fn      => Reset_Sensor'Access
                );
 
-      package Next_Cmd is new Commands_Interpreter.Action_Accessor (
+      package Next_Cmd is new Commands_Interpreter.Discrete_Accessor ( T => Natural,
                   Key            => "NEXT",
+                  Default_Value  => 0,
                   Action_Fn      => Send_Next_Value'Access
                );
 

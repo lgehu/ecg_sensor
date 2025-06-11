@@ -265,7 +265,12 @@ package body Ecg_Sensor is
                when RUNNING =>
                   Process_Sample;
                when others =>
-                  null;
+                  
+                  if Next_Cmd.Get_Value > 0 then
+                     Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
+                     Next_Cmd.Accessor.Set_Value (Next_Cmd.Get_Value - 1);
+                  end if;
+
             end case;
          end loop;
       exception -- Unknows Errors (if UART is working..), restart the board
