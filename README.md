@@ -26,7 +26,7 @@ Sending <SAMPLE_RATE=> with the sign '=' and without value reset the parameter t
 If the command is either misswritten or does not exist, the board respond with an error. 
 The command interpreter on the board side perform a type check on reception before storing the new value.  
 It mean that no value will be updated if you send a value of incorrect format or out of bounds.
-Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greater than 0) is expected.
+Example: <SAMPLE_RATE=100.5> send an error because a Positive (All integer greater than 0) is expected.
 
 **General commands**    
 | Commands/Parameters |  Description  | Argument type
@@ -37,7 +37,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied. | None |  
 | STOP                | Stop automatic sampling. Reset the sample index to 0. | None |
 | PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
-| NEXT                | Request a single sample. No need to start sampling. | None |
+| NEXT                | Request N sample. Doesn't work during automatic sampling | 0 < Integer_Value |
 | VERSION             | Ask for the ecg version. | None |
 | SAMPLE_RATE         | Set the output frequency during the automatic sampling. | 0 < Integer_Value |
 
