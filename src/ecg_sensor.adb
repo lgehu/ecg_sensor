@@ -51,6 +51,7 @@ package body Ecg_Sensor is
    procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
    begin
       Send_Command ("ECG_SENSOR " & ECG_VERSION);
+      LED_Ctrl.Start_Blinking;
    end Send_Version;
 
    procedure Return_Arg (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
@@ -173,10 +174,12 @@ package body Ecg_Sensor is
                                        Window_Sec => Window_Sec.Get_Value, 
                                        Output_Stage => Output_Stage.Get_Value));
 
+
             elsif Current_State = PAUSED then
                Current_State := RUNNING;
             end if;
          elsif Cmd_Key = "STOP" then
+
             Intended_State := IDLE;
             if Current_State = RUNNING or 
                   Current_State = PAUSED or 
@@ -184,7 +187,7 @@ package body Ecg_Sensor is
                Current_State := IDLE;
             end if;
          elsif Cmd_Key = "PAUSE" then
-            Intended_State := PAUSED;            
+            Intended_State := PAUSED; 
             if Current_State = RUNNING then
                Current_State := PAUSED;
             end if;
@@ -208,6 +211,10 @@ package body Ecg_Sensor is
    procedure Initialize is
    begin
       USBCOM.Enable_Interrupt;
+
+      -- Controllers
+      LED_Ctrl.Initialize;
+      LED_Ctrl.Set_Frequency (10.0);
 
       -- Parameters
       Amplitude_Coef.Register;
@@ -242,6 +249,11 @@ package body Ecg_Sensor is
       if (Clock - Process_Start_Time) > Sample_Period then
          Process_Start_Time := Clock;
          Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
+         
+         if PanTompkins.Is_Pick_Detected then
+            LED_Ctrl.Start_Blinking;
+         end if;         
+         -- LED_Ctrl.Set_Frequency (Float (PanTompkins.Get_Heart_Rate / 60.0));
       end if;
    end Process_Sample;
 

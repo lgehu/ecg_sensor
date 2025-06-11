@@ -36,6 +36,8 @@ package body PanTompkins is
    Last_Peak_Sample : Natural := 0;
    Heart_Rate       : IEEE_Float_32 := 0.0;
 
+   Pick_Detected : Boolean := False;
+
    procedure Initialize (Param : Config := (others => <>)) is
    begin
       Parameters := Param;
@@ -143,6 +145,7 @@ package body PanTompkins is
       Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
 
       if Squared > Threshold and then (Sample_Index - Last_Peak_Sample > Min_Distance) then
+         Pick_Detected := True;
          if Last_Peak_Sample > 0 then
             declare
                RR : IEEE_Float_32 := IEEE_Float_32(Sample_Index - Last_Peak_Sample) / Fs;
@@ -152,6 +155,8 @@ package body PanTompkins is
             end;
          end if;
          Last_Peak_Sample := Sample_Index;
+      else
+         Pick_Detected := False;
       end if;
 
       Sample_Index := Sample_Index + 1;
@@ -163,5 +168,11 @@ package body PanTompkins is
    begin
       return Heart_Rate;
    end Get_Heart_Rate;
+
+   function Is_Pick_Detected return Boolean is
+   begin
+      return Pick_Detected;
+   end Is_Pick_Detected;
+
 
 end PanTompkins;
