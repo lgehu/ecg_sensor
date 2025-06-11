@@ -1,10 +1,12 @@
 with HAL.UART;
 with Interfaces;
 with System;
-with HAL; use HAL;
-with UART_USB; use UART_USB; 
+with HAL;            use HAL;
 with AdaData; 
 use type Interfaces.IEEE_Float_32;
+
+with UART_USB;       use UART_USB;
+with Peripherals;    use Peripherals;
 
 -- Testing generated ECG data by to_ada.py
 procedure Main is
@@ -18,11 +20,11 @@ procedure Main is
    end To_Int16;   
 
 begin
-   Initialize(115_200);
-   Transmit_String ("Beginning transfer...");
+   USBCOM.Initialize(115_200);
+   Transmit_String (USBCOM, "Beginning transfer...");
 
    for I in 1 .. AdaData.Data_Size loop
-      UART_USB.Transmit_String(AdaData.Data(I)'Image & ASCII.LF & ASCII.CR);
+      Transmit_String(USBCOM, AdaData.Data(I)'Image & ASCII.LF & ASCII.CR);
       -- UART_USB.Write16(UART_USB.Int16(I), Status);
    end loop;
 

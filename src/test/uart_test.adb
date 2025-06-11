@@ -1,20 +1,21 @@
-with HAL; use HAL;
-with HAL.UART; use HAL.UART;
-with UART_USB;
+with HAL;         use HAL;
+with HAL.UART;    use HAL.UART;
 
-procedure Ecg_Sensor is
+with UART_USB;    use UART_USB;
+with Peripherals; use Peripherals;
+
+procedure UART_Test is
    Status : UART_Status;
    Dummy : UART_USB.Int16;
 begin
 
-   UART_USB.Initialize(115_200);
-   --UART_USB.Transmit_String ("Hello");
+   USBCOM.Initialize (115_200);
 
    loop
-      Dummy := UART_USB.Read16(Status);
+      Dummy := UART_USB.Read16 (USBCOM, Status);
       if Status = Ok then
-         UART_USB.Write16 (Dummy, Status);
+         UART_USB.Write16 (USBCOM, Dummy, Status);
       end if;
    end loop;
 
-end Ecg_Sensor;
+end UART_Test;

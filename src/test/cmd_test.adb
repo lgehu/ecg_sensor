@@ -1,9 +1,11 @@
-with Ada.Real_Time; use Ada.Real_Time;
-with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Real_Time;        use Ada.Real_Time;
+with Ada.Exceptions;       use Ada.Exceptions;
+with Interfaces;
+
+with UART_USB;             use UART_USB;
+with Peripherals;          use Peripherals;
 with AdaData;
 with Commands_Interpreter; use Commands_Interpreter;
-with Interfaces;
-with UART_USB; use UART_USB;
 
 procedure Cmd_Test is
    -- TODO : TEST WITH RECORD
@@ -11,14 +13,14 @@ procedure Cmd_Test is
 
    type State is (BUSY, WAITING, PAUSED);
 
-   procedure Log (Msg : String) renames UART_USB.Transmit_String;
+   procedure Log (This : in out Controller; Msg : String) renames UART_USB.Transmit_String;
 
    procedure Return_Arg (Arg : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
       if Valid then
-         Log (Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
+         Log (USBCOM, Arg.Key'Image & " = " & Arg.Value'Image & END_FLAG);
       else
-         Log ("Invalid parameter" & END_FLAG);
+         Log (USBCOM, "Invalid parameter" & END_FLAG);
       end if;
    end;
 
@@ -27,7 +29,7 @@ procedure Cmd_Test is
    begin
       Get_Args (Args);
       for I in Args'Range loop
-         Log (Args (I).Key'Image & " = " & Args (I).Value'Image & END_FLAG);
+         Log (USBCOM, Args (I).Key'Image & " = " & Args (I).To_String.all & END_FLAG);
       end loop;
    end Print_Args;
 
@@ -69,8 +71,8 @@ procedure Cmd_Test is
    Input : UART_String;
 
 begin
-      UART_USB.Initialize (115_200);
-      Log ("Argument interpreter" & END_FLAG);
+      USBCOM.Initialize (115_200);
+      Log (USBCOM, "Argument interpreter" & END_FLAG);
    
       Sample_Rate.Register;
       Amplitude_Coef.Register;
@@ -80,11 +82,11 @@ begin
 
       loop 
          begin
-            Input := UART_USB.Receive_String (ASCII.Semicolon, Time_Span_Last);
+            Input := UART_USB.Receive_String (USBCOM, ASCII.Semicolon, Time_Span_Last);
             Arg := Commands_Interpreter.Parse (B_Str.To_String (Input));
          exception
             when E : Commands_Interpreter.Commands_Exception =>
-                  Log (Exception_Message (E));
+                  Log (USBCOM, Exception_Message (E));
          end;
       end loop;
 
