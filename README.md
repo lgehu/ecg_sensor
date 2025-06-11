@@ -25,7 +25,7 @@ Sending <GET_ARGS=SAMPLE_RATE> return the current stored value linked to the key
 Sending <SAMPLE_RATE=> with the sign '=' and without value reset the parameter to his default value.
 If the command is either misswritten or does not exist, the board respond with an error. 
 The command interpreter on the board side perform a type check on reception before storing the new value.  
-It mean that no value will be updated if you send a value of incorrect format or out of bounds. An error is sent on error.
+It mean that no value will be updated if you send a value of incorrect format or out of bounds.
 Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greater than 0) is expected.
 
 **General commands**    
