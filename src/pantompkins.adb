@@ -1,14 +1,16 @@
 with Ada.Numerics.Elementary_Functions;
+with UART_USB;
+with Ada.Exceptions; use Ada.Exceptions;
+with Ada.Unchecked_Deallocation;
 
 package body PanTompkins is
 
-   -- Constants
-   Default_Window_Sec : constant IEEE_Float_32 := 0.3;   -- 300 ms
-   Default_Min_RR_Sec : constant IEEE_Float_32 := 0.4;   -- 400 ms
-   RR_FIFO_Size       : constant := 10;                  -- Size of RR interval FIFO
-
+   -- Size of RR interval FIFO
+   RR_FIFO_Size       : constant := 10; 
+ 
    -- Sampling frequency
    Fs : IEEE_Float_32 := 100.0;
+   Parameters : Config;
 
    -- Derived sizes
    Window_Size     : Natural;
@@ -18,7 +20,9 @@ package body PanTompkins is
    type Buffer is array (Natural range <>) of IEEE_Float_32;
    Raw_Buffer     : Buffer(0 .. 4) := (others => 0.0);
    Deriv_Buffer   : Buffer(0 .. 3) := (others => 0.0);
+   
    type Buffer_Access is access all Buffer;
+   procedure Free_Buffer is new Ada.Unchecked_Deallocation (Buffer, Buffer_Access);
    Squared_Buffer : Buffer_Access;
 
    -- RR FIFO
@@ -32,12 +36,21 @@ package body PanTompkins is
    Last_Peak_Sample : Natural := 0;
    Heart_Rate       : IEEE_Float_32 := 0.0;
 
-   procedure Initialize (Sampling_Frequency : IEEE_Float_32) is
+   Pick_Detected : Boolean := False;
+
+   procedure Initialize (Param : Config := (others => <>)) is
    begin
-      Fs := Sampling_Frequency;
-      Window_Size  := Natural(Fs * Default_Window_Sec);
-      Min_Distance := Natural(Fs * Default_Min_RR_Sec);
+      Parameters := Param;
+      Fs := Param.Sampling_Frequency;
+      Window_Size  := Natural(Fs * Param.Window_Sec);
+      Min_Distance := Natural(Fs * Param.Minimal_Pick_Distance_Sec);
+
+      if Squared_Buffer /= null then
+         Free_Buffer (Squared_Buffer);
+      end if;   
+
       Squared_Buffer := new Buffer(0 .. Window_Size - 1);
+   
       Raw_Buffer := (others => 0.0);
       Deriv_Buffer := (others => 0.0);
       RR_Values := (others => 0.0);
@@ -89,14 +102,29 @@ package body PanTompkins is
       Integrated : IEEE_Float_32 := 0.0;
       Threshold  : IEEE_Float_32;
    begin
+
+
       -- Shift buffers
       Raw_Buffer := Raw_Buffer(1 .. 4) & Sample;
       Filtered := High_Pass(Low_Pass);
 
+
+      if Parameters.Output_Stage = Stage_Filtered then
+         return Filtered;
+      end if;
+
       Deriv_Buffer := Deriv_Buffer(1 .. 3) & Filtered;
       Deriv := Derivative;
 
+      if Parameters.Output_Stage = Stage_Derivatived then
+         return Deriv;
+      end if;
+
       Squared := Deriv * Deriv;
+
+      if Parameters.Output_Stage = Stage_Squared then
+         return Squared;
+      end if;
 
       for I in 0 .. Window_Size - 2 loop
          Squared_Buffer(I) := Squared_Buffer(I + 1);
@@ -110,9 +138,14 @@ package body PanTompkins is
 
       Integrated := Integrated / IEEE_Float_32(Squared_Buffer'Length);
 
-      Threshold := Integrated * 1.5;
+      if Parameters.Output_Stage = Stage_Integrated then
+         return Integrated;
+      end if;
+
+      Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
 
       if Squared > Threshold and then (Sample_Index - Last_Peak_Sample > Min_Distance) then
+         Pick_Detected := True;
          if Last_Peak_Sample > 0 then
             declare
                RR : IEEE_Float_32 := IEEE_Float_32(Sample_Index - Last_Peak_Sample) / Fs;
@@ -122,15 +155,24 @@ package body PanTompkins is
             end;
          end if;
          Last_Peak_Sample := Sample_Index;
+      else
+         Pick_Detected := False;
       end if;
 
       Sample_Index := Sample_Index + 1;
-      return Integrated;
+
+      return Heart_Rate;
    end Process_Sample;
 
    function Get_Heart_Rate return IEEE_Float_32 is
    begin
       return Heart_Rate;
    end Get_Heart_Rate;
+
+   function Is_Pick_Detected return Boolean is
+   begin
+      return Pick_Detected;
+   end Is_Pick_Detected;
+
 
 end PanTompkins;

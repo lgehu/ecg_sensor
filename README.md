@@ -28,7 +28,7 @@ Your_folder
 ## COMPILATION ##
 Plug your device to your computer, then to compile the Ada project run:   
 `make PRJ_NAME=ecg_test`
-You can replace 'ecg_test' with an other file in the src/test folder.  
+You can replace 'ecg_test' with an other file in the src/test folder (without extension).  
 You should change in the makefile the port of your device if needed.
 
 ## Flashing an ECG file to the board ## 

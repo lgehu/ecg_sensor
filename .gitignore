@@ -4,3 +4,4 @@
 /config/
 /ecg_sensor/
 CMSIS/
+/__pycache__/

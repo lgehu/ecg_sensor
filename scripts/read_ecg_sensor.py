@@ -13,9 +13,10 @@ def valid_port(port):
     else:
         raise argparse.ArgumentTypeError(f"Invalid port: {port}. Expected formats: COM3 or /dev/ttyUSB0")
 
-# Test Int16 transmissions to UART with the STM32F446RE
+# Test Int16 transmissions to UART with the STM32F446RE.
+# This script can works if the board is running the program test/ecg_test.adb.
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Read and display an ECG signak coming from a board")
+    parser = argparse.ArgumentParser(description="Read and display an ECG signal coming from a board")
     parser.add_argument("-p", "--port", 
                         type=valid_port,
                         required=True,

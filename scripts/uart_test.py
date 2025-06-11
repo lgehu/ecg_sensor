@@ -4,6 +4,7 @@ import numpy as np
 import struct
 
 # Test Int16 transmissions to UART with the STM32F446RE
+# This script can works if the board is running the program test/uart_test.adb.
 if __name__ == "__main__":
     # Open port (Linux only)
     with Serial("/dev/ttyACM0", baudrate=115200, write_timeout=1) as ser:

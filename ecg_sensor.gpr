@@ -1,5 +1,5 @@
 with "config/ecg_sensor_config.gpr";
-with "../alr_adl_crates/nucleo_f446re/nucleo_f446re.gpr";
+with "nucleo_f446re.gpr";
 
 project ECG_Sensor is
    for Runtime ("Ada") use nucleo_f446re'Runtime ("Ada");
@@ -8,12 +8,14 @@ project ECG_Sensor is
    Main_Name := external ("MAIN", "ecg_test");
    for Main use (Main_Name & ".adb");
    for Languages use ("Ada", "C");
-   for Source_Dirs use ("src/**", "config/", "");
+   for Source_Dirs use ("src/**", "config/", "src/controllers/**");
    for Object_Dir use "obj/";
+   for Exec_Dir use "bin";
    for Create_Missing_Dirs use "True";
 
    -- package Compiler renames nucleo_f446re.Compiler;
    
+
   package Compiler is
       for Default_Switches ("C") use (
          "-mcpu=cortex-m4",
@@ -23,6 +25,15 @@ project ECG_Sensor is
          "-I../CMSIS/Core/Include",
          "-I../CMSIS/Include"
       );
+
+      for Default_Switches ("Ada") use (
+         "-O2",
+         "-gnat2022",
+         "-T", "linker/linker_script.ld"
+      );
+
+      -- for Linker_Switches use ("-T", "linker/linker_script.ld");
+
    end Compiler;
 
   -- package Linker is

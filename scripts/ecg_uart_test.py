@@ -68,6 +68,8 @@ def arg_parse():
 
     return( args)
 
+# This script send ECG signals to the board and diplay the processed result from the board.
+# This script can works if the board is running the program test/ecg_test.adb.
 if __name__ == "__main__":
     args = arg_parse()
 
