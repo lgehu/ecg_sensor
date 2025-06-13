@@ -16,11 +16,13 @@ with UART_USB; use UART_USB;
 package body Ecg_Sensor is
 
    -- TODO: Add parameter for input channel and output channel selection
-   -- TODO: Documentation for commands and interpreter
    -- TODO: Add Unregister procedure 
    -- TODO: Add this crate to the private alire index
    -- TODO: Add input and output channel (ADC, SPI ...)
-   
+   -- TODO: Add mode Output_stage = ON_PICK_DETECTED. Board send an information only if a pick is detected.
+   -- Need to refactor the Pantompkins where the sensor handle the outputstage instead of the algorithm.
+   -- TODO: Add the dataset name at the beginning of the data signal ?
+
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
 

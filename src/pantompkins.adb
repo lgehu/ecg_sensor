@@ -5,8 +5,8 @@ with Ada.Unchecked_Deallocation;
 
 package body PanTompkins is
 
-   -- Size of RR interval FIFO
-   RR_FIFO_Size       : constant := 10; 
+   -- Size of RR interval FIFO (Heart rate average)
+   RR_FIFO_Size       : constant := 5;
  
    -- Sampling frequency
    Fs : IEEE_Float_32 := 100.0;
@@ -147,7 +147,10 @@ package body PanTompkins is
 
       Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
 
-      if Squared > Threshold and then (Sample_Index - Last_Peak_Sample > Min_Distance) then
+      if Squared > Threshold and 
+         not Pick_Detected and 
+         (Sample_Index - Last_Peak_Sample) > Min_Distance then
+         
          Pick_Detected := True;
          if Last_Peak_Sample > 0 then
             declare

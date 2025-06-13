@@ -41,13 +41,13 @@ package Ecg_Sensor is
 
       package Pick_Distance is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Positive_Float,
                   Key            => "PICK_DISTANCE",
-                  Default_Value  => 0.3,
+                  Default_Value  => 0.260,
                   Action_Fn      => Return_Arg'Access
                );
 
       package Window_Sec is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Positive_Float,
                   Key            => "WINDOW_SEC",
-                  Default_Value  => 0.4,
+                  Default_Value  => 0.150,
                   Action_Fn      => Return_Arg'Access
                );
 

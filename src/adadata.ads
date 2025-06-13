@@ -11,7 +11,7 @@ package AdaData is
     Data : aliased Data_Type(1 .. 12000);
     for Data'Address use System'To_Address (16#08060000#);
    
-    Data_Size   : constant Positive := 12000;
+    Data_Size   : constant Positive := 1000;
     Sample_Rate : constant Positive := 1000;
 
 end AdaData;

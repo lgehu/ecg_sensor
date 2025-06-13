@@ -9,15 +9,15 @@ package PanTompkins is
                   Stage_Integrated, 
                   Stage_HR);
 
-   subtype Amplitude_Treshold_Coef_Type is IEEE_Float_32 range 0.0 .. 2.0;
+   subtype Amplitude_Treshold_Coef_Type is IEEE_Float_32 range 0.0 .. 5.0;
    subtype Sampling_Frequency_Type is IEEE_Float_32 range 1.0 .. 1000.0;
    subtype Positive_Float is IEEE_Float_32 range 0.0 .. IEEE_Float_32'Last;
 
    type Config is record
       Sampling_Frequency : Sampling_Frequency_Type := 100.0;
       Amplitude_Treshold_Coef : Amplitude_Treshold_Coef_Type := 1.5;
-      Minimal_Pick_Distance_Sec : Positive_Float := 0.4;
-      Window_Sec : Positive_Float := 0.3;
+      Minimal_Pick_Distance_Sec : Positive_Float := 0.260;
+      Window_Sec : Positive_Float := 0.150;
       Output_Stage : Stage := Stage_Integrated;
    end record;
 
