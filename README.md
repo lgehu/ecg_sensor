@@ -39,7 +39,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
 | NEXT                | Request a single sample. No need to start sampling. | None |
 | VERSION             | Ask for the ecg version. | None |
-| SAMPLE_RATE         | Set the output frequency during the automatic sampling. | 0 < Integer_Value |
+| SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value |
 
 **ECG commands**  
  Commands/Parameters |  Description  | Argument type
@@ -47,7 +47,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | AMPLITUDE_COEF     | Set the multiplier for the amplitude threshold. This treshold is the mean of the integrated data during the Pan-Tompkins algorithm. | 0.0 < Float_Value < 2.0  |
 | PICK_DISTANCE      | Set the minimal time distance in second between to pick. | 0.0 < Float_Value |
 |  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value |
-| OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR |
+| OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Row &#124; Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR |
 
 ## PREREQUISITES (Linux) ##
 You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
