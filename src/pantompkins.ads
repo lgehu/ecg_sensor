@@ -2,7 +2,12 @@ with Interfaces; use Interfaces;
 
 package PanTompkins is
 
-   type Stage is (Stage_Filtered, Stage_Derivatived, Stage_Squared, Stage_Integrated, Stage_HR);
+   type Stage is (Stage_Row, 
+                  Stage_Filtered, 
+                  Stage_Derivatived, 
+                  Stage_Squared, 
+                  Stage_Integrated, 
+                  Stage_HR);
 
    subtype Amplitude_Treshold_Coef_Type is IEEE_Float_32 range 0.0 .. 2.0;
    subtype Sampling_Frequency_Type is IEEE_Float_32 range 1.0 .. 1000.0;

@@ -7,7 +7,7 @@ if __name__ == "__main__":
     # Open port (Linux only)
     with Serial("/dev/ttyACM0", baudrate=115200, timeout=1) as ser:
         
-        MAX_SAMPLE = 10000 
+        MAX_SAMPLE = 12000 
 
         values = [0] * MAX_SAMPLE
         timestamps = [0] * MAX_SAMPLE
@@ -17,8 +17,8 @@ if __name__ == "__main__":
 
         ecg_com.send_command(ser, "STOP", True)
         ecg_com.send_command(ser, "OUTPUT_FORMAT=OUT_ASCII", True)
-        ecg_com.send_command(ser, "SAMPLE_RATE=100", True)
-        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_INTEGRATED", True)
+        #ecg_com.send_command(ser, "SAMPLE_RATE=100", True)
+        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_FILTERED", True)
         ecg_com.send_command(ser, "PICK_DISTANCE=0.6", True)
         ecg_com.send_command(ser, "START", True)
 

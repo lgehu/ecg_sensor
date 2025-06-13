@@ -103,6 +103,9 @@ package body PanTompkins is
       Threshold  : IEEE_Float_32;
    begin
 
+      if Parameters.Output_Stage = Stage_Row then
+         return Sample;
+      end if;
 
       -- Shift buffers
       Raw_Buffer := Raw_Buffer(1 .. 4) & Sample;
