@@ -10,14 +10,12 @@ with HAL.UART; use HAL.UART;
 
 with Peripherals; use Peripherals;
 with PanTompkins;
-with AdaData;
 with Ada.Unchecked_Conversion;
 with UART_USB; use UART_USB;
 
 package body Ecg_Sensor is
 
    -- TODO: Add parameter for input channel and output channel selection
-   -- TODO: Command to acquire an arbitrary ammount of sample (ACQUIRE=100)
    -- TODO: Documentation for commands and interpreter
    -- TODO: Add Unregister procedure 
    -- TODO: Add this crate to the private alire index
@@ -39,6 +37,8 @@ package body Ecg_Sensor is
    Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
    Process_Start_Time : Time := Clock;          -- Precedent sample sent time
    
+   Epoch : Time := Clock;
+
    procedure Log (This : in out Controller; Msg : String) renames UART_USB.Transmit_String;
 
    procedure Send_Command (Msg : String) is
@@ -128,11 +128,16 @@ package body Ecg_Sensor is
 
    procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    Result : IEEE_Float_32 := Next_Value;
+   Time_Stamp : UInt64 := UInt64 (To_Duration ((Clock - Epoch) * 1_000_000)); -- Time Stamp in microsecond
+   Status : UART_Status;
+   procedure Write_UInt64 is new UART_USB.Write (T => UInt64);
    begin
       case Output_Format.Get_Value is
          when OUT_ASCII =>
-            Send_Command (Result'Image);
+            Send_Command (Time_Stamp'Image & ";" & Result'Image);
          when FLOAT32 =>
+            Write_UInt64 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
+            Log (USBCOM, ";");
             Transmit_Float_32 (Result);
             Log (USBCOM, CMD_END & "");
          when others =>
@@ -267,7 +272,7 @@ package body Ecg_Sensor is
                when others =>
                   
                   if Next_Cmd.Get_Value > 0 then
-                     Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
+                     Process_Sample;
                      Next_Cmd.Accessor.Set_Value (Next_Cmd.Get_Value - 1);
                   end if;
 

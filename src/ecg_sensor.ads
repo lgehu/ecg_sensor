@@ -1,6 +1,7 @@
 with Commands_Interpreter;
 with Interfaces; use Interfaces;
 with PanTompkins;
+with AdaData;
 
 package Ecg_Sensor is
 
@@ -28,7 +29,7 @@ package Ecg_Sensor is
 
       package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Positive,
                   Key            => "SAMPLE_RATE",
-                  Default_Value  => 100,
+                  Default_Value  => AdaData.Sample_Rate,
                   Action_Fn      => Return_Arg'Access
                );
 

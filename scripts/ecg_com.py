@@ -40,19 +40,19 @@ def wait_response(ser : Serial, msg : str | None = None):
     while response != msg:
         ser.read_until("<".encode())[:-1]
         data = ser.read_until(">".encode())[:-1]
-        
         response = data.decode(errors="ignore")
-        print("<" + response)
+        #print("<" + response)
         
         if msg == None:
             break
 
-    return data
+    return response
 
 def log(ser : Serial):
     while True: 
         if ser.in_waiting > 0:
             d = wait_response(ser)
+            print("<" + d)
         else:
             time.sleep(0.1)
 
