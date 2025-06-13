@@ -34,7 +34,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String |
 | OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode, the format is <float_value>. On binary mode, 4 bytes is sent in Big endian format. Each sample are separated with the caractere ';'. Thus, data can extra byte in case of escape value. | OUT_ASCII &#124; FLOAT32 |
 | RESET               | Restart the board | None |
-| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied. | None |  
+| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied. The result format in ASCII is : <Time_stamp;Value> where Time_stamp is the time difference since the board started in microsecond. | None |  
 | STOP                | Stop automatic sampling. Reset the sample index to 0. | None |
 | PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
 | NEXT                | Request a single sample. No need to start sampling. | None |
