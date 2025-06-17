@@ -67,6 +67,7 @@ package body PanTompkins is
       Sample_Index := 0;
       Last_Peak_Sample := 0;
       Heart_Rate := 0.0;
+      Integrated_Index := 0;
    end Initialize;
 
    function Low_Pass return IEEE_Float_32 is

@@ -21,7 +21,7 @@ begin
 
    USBCOM.Initialize (115_200);
 
-   PanTompkins.Initialize ((Sampling_Frequency => 100.0, 
+   PanTompkins.Initialize ((Sampling_Frequency => 500, 
                            Amplitude_Treshold_Coef => 1.5,
                            Minimal_Pick_Distance_Sec => 0.4,
                            Window_Sec => 0.3,

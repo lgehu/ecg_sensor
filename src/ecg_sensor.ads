@@ -75,6 +75,12 @@ package Ecg_Sensor is
                   Action_Fn     => Return_Arg'Access
                );
       
+      package Enable_Trigger is new Commands_Interpreter.Discrete_Accessor (T => Boolean,
+                  Key           => "ENABLE_TRIGGER",
+                  Default_Value => FALSE,
+                  Action_Fn     => Return_Arg'Access
+               );
+      
       package Start_Cmd is new Commands_Interpreter.Action_Accessor (
                   Key            => "START", 
                   Action_Fn      => Change_State'Access);
@@ -102,5 +108,6 @@ package Ecg_Sensor is
                   Key            => "VERSION", 
                   Action_Fn      => Send_Version'Access
                );
+
 
 end Ecg_Sensor;

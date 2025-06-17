@@ -19,9 +19,9 @@ if __name__ == "__main__":
 
         ecg_com.send_command(ser, "STOP",                    True)
         ecg_com.send_command(ser, "OUTPUT_FORMAT=OUT_ASCII", True)
-        ecg_com.send_command(ser, "SAMPLE_RATE=1000",        True)
+        ecg_com.send_command(ser, "SAMPLE_RATE=200",        True)
         ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_HR",   True)
-        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_FLASH",   True)
+        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",   True)
         ecg_com.send_command(ser, "AMPLITUDE_COEF=2",      True)
         ecg_com.send_command(ser, "PICK_DISTANCE=0.260",     True)
         ecg_com.send_command(ser, "START",                   True)

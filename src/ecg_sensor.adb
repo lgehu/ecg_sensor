@@ -26,6 +26,10 @@ package body Ecg_Sensor is
    -- TODO: Add mode Output_stage = ON_PICK_DETECTED. The sensor sends an information only if a pick is detected.
    -- Need to refactor the Pantompkins where the sensor handle the outputstage instead of the algorithm.
    -- TODO: Add the dataset name at the beginning of the data signal ?
+   -- TODO: Optimize function Process Sample. It take up to 0.0049 seconds with -02.
+   -- Thus, the sensor is limited to 200 Hz if sampling in real time (other than sampling the flash). 
+   -- For example, sampling the ADC at 1000 Hz will skip ~5 sample, picks will be detected with smaller interval and calcul higher heart rate.
+   -- The problem might come from the UART.
 
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
@@ -150,6 +154,11 @@ package body Ecg_Sensor is
    Status : UART_Status;
    procedure Write_UInt64 is new UART_USB.Write (T => UInt64);
    begin
+
+      if Enable_Trigger.Get_Value and not PanTompkins.Is_Pick_Detected then
+         return;
+      end if;
+
       case Output_Format.Get_Value is
          when OUT_ASCII =>
             Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Pick_Detected'Image);
@@ -233,11 +242,13 @@ package body Ecg_Sensor is
    Result : IEEE_Float_32 := 0.0;
    Status : UART_Status;
    Sample_Period : Time_Span := To_Time_Span(1.0 / Sample_Rate.Get_Value);
+   Elapsed_Time : Time_Span := Clock - Process_Start_Time;
    begin
-      if (Clock - Process_Start_Time) > Sample_Period then
+      if Elapsed_Time > Sample_Period then
          Process_Start_Time := Clock;
+
          Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
-         
+         -- Log (USBCOM, "Elapsed Time: " &  To_Duration (Elapsed_Time)'Image);
          if PanTompkins.Is_Pick_Detected then
             LED_Ctrl.Start_Blinking;
          end if;         
@@ -264,6 +275,7 @@ package body Ecg_Sensor is
       Output_Stage.Register;
       Output_Format.Register;
       Input_Channel.Register;
+      Enable_Trigger.Register;
 
       -- Action
       Get_Args.Register;
