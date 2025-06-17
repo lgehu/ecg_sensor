@@ -51,7 +51,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 |  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value |
 | OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Row &#124; Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR |
 
-**Limitations**
+**Limitations**  
 Sample rate higher than 200 introduce wrong heart rate on the STM32f446RE without trigger enabled and sampling on peripherals (not the flash). The whole process 
 Read input channel + process data + send the data, takes up to 5 ms. Thus, data with higher sample rate will not be processed. In case picks are detected,
 they will be seen as closer because less data are sampled.
