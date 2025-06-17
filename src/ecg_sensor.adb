@@ -45,6 +45,8 @@ package body Ecg_Sensor is
    
    Epoch : Time := Clock;
 
+   Last_Btn_State : Boolean;
+
    procedure Log (This : in out Controller; Msg : String) renames UART_USB.Transmit_String;
 
    procedure Send_Command (Msg : String) is
@@ -132,11 +134,12 @@ package body Ecg_Sensor is
             Input := AdaData.Data (Sample_Index);
             Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1; 
          when CH_BTN =>
-            if not Set (Peripherals.User_Btn) then
+            if not Set (Peripherals.User_Btn) and Last_Btn_State then
                Input := 5000.0;
             else
                Input := 0.0;
             end if;
+            Last_Btn_State := Set (Peripherals.User_Btn);
       end case;
       return PanTompkins.Process_Sample (Input);
    end Next_Value;

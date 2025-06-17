@@ -166,10 +166,7 @@ package body PanTompkins is
 
       Integrated := Integrated / IEEE_Float_32(Squared_Buffer'Length);
 
-      if Parameters.Output_Stage = Stage_Integrated then
-         return Integrated;
-      end if;
-
+     
       Integrated_Buffer (Integrated_Index) := Integrated;
       Integrated_Index := (Integrated_Index + 1) mod Integrated_Buffer'Length;
 
@@ -197,6 +194,10 @@ package body PanTompkins is
       end if;
 
       Sample_Index := Sample_Index + 1;
+
+      if Parameters.Output_Stage = Stage_Integrated then
+         return Integrated;
+      end if;
 
       return Heart_Rate;
    end Process_Sample;
