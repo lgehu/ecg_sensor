@@ -24,6 +24,9 @@ package body PanTompkins is
    type Buffer_Access is access all Buffer;
    procedure Free_Buffer is new Ada.Unchecked_Deallocation (Buffer, Buffer_Access);
    Squared_Buffer : Buffer_Access;
+   Integrated_Buffer : Buffer_Access;
+
+   Integrated_Index : Natural := 0;
 
    -- RR FIFO
    type RR_Array is array (0 .. RR_FIFO_Size - 1) of IEEE_Float_32;
@@ -47,10 +50,15 @@ package body PanTompkins is
 
       if Squared_Buffer /= null then
          Free_Buffer (Squared_Buffer);
-      end if;   
+      end if;
+
+      if Integrated_Buffer /= null then
+         Free_Buffer (Integrated_Buffer);
+      end if;
 
       Squared_Buffer := new Buffer(0 .. Window_Size - 1);
-   
+      Integrated_Buffer := new Buffer(0 .. Window_Size - 1);
+
       Raw_Buffer := (others => 0.0);
       Deriv_Buffer := (others => 0.0);
       RR_Values := (others => 0.0);
@@ -95,6 +103,24 @@ package body PanTompkins is
       return Sum / IEEE_Float_32(RR_Count);
    end Average_RR;
 
+   function Average_Integrated return IEEE_Float_32 is
+      Sum : IEEE_Float_32 := 0.0;
+   begin
+      for I of Integrated_Buffer.all loop
+         Sum := Sum + I;
+      end loop;
+      return Sum / IEEE_Float_32 (Integrated_Buffer'Length);
+   end Average_Integrated;
+
+   function Max_Integrated return IEEE_Float_32 is
+      Max : IEEE_Float_32 := 0.0;
+   begin
+      for I of Integrated_Buffer.all loop
+         Max := (if I > Max then I else Max);
+      end loop;
+      return Max;
+   end Max_Integrated;
+
    function Process_Sample(Sample : IEEE_Float_32) return IEEE_Float_32 is
       Filtered   : IEEE_Float_32;
       Deriv      : IEEE_Float_32;
@@ -110,7 +136,6 @@ package body PanTompkins is
       -- Shift buffers
       Raw_Buffer := Raw_Buffer(1 .. 4) & Sample;
       Filtered := High_Pass(Low_Pass);
-
 
       if Parameters.Output_Stage = Stage_Filtered then
          return Filtered;
@@ -145,10 +170,18 @@ package body PanTompkins is
          return Integrated;
       end if;
 
-      Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
+      Integrated_Buffer (Integrated_Index) := Integrated;
+      Integrated_Index := (Integrated_Index + 1) mod Integrated_Buffer'Length;
 
-      if Squared > Threshold and 
-         not Pick_Detected and 
+      --Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
+      Threshold :=  Average_Integrated * Parameters.Amplitude_Treshold_Coef;
+
+      -- Clear precedent detection flag
+      if Pick_Detected then
+         Pick_Detected := False;
+      end if;
+
+      if Integrated > Threshold and 
          (Sample_Index - Last_Peak_Sample) > Min_Distance then
          
          Pick_Detected := True;
@@ -161,8 +194,6 @@ package body PanTompkins is
             end;
          end if;
          Last_Peak_Sample := Sample_Index;
-      else
-         Pick_Detected := False;
       end if;
 
       Sample_Index := Sample_Index + 1;
@@ -180,5 +211,9 @@ package body PanTompkins is
       return Pick_Detected;
    end Is_Pick_Detected;
 
+   procedure Clear_Flag_Pick_Detection is
+   begin
+      Pick_Detected := False;
+   end Clear_Flag_Pick_Detection;
 
 end PanTompkins;

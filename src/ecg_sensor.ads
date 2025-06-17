@@ -5,6 +5,8 @@ with AdaData;
 
 package Ecg_Sensor is
 
+   type Input_Channel_Type is (CH_BTN, CH_FLASH);
+
    procedure Initialize;
 
    -- Process next value from selected channel
@@ -63,8 +65,14 @@ package Ecg_Sensor is
 
       package Output_Format is new Commands_Interpreter.Discrete_Accessor (T => Output_Format_Type,
                   Key            => "OUTPUT_FORMAT", 
-                  Default_Value  => FLOAT32,
+                  Default_Value  => OUT_ASCII,
                   Action_Fn      => Return_Arg'Access
+               );
+
+      package Input_Channel is new Commands_Interpreter.Discrete_Accessor (T => Input_Channel_Type,
+                  Key           => "INPUT_CHANNEL",
+                  Default_Value => CH_FLASH,
+                  Action_Fn     => Return_Arg'Access
                );
       
       package Start_Cmd is new Commands_Interpreter.Action_Accessor (

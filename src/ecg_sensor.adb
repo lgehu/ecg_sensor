@@ -7,6 +7,10 @@ with Ada.Strings.Bounded;
 
 with HAL; use HAL;
 with HAL.UART; use HAL.UART;
+with STM32.Board; use STM32.Board;
+with STM32.Device;  use STM32.Device;
+with STM32.GPIO;    use STM32.GPIO;
+
 
 with Peripherals; use Peripherals;
 with PanTompkins;
@@ -19,7 +23,7 @@ package body Ecg_Sensor is
    -- TODO: Add Unregister procedure 
    -- TODO: Add this crate to the private alire index
    -- TODO: Add input and output channel (ADC, SPI ...)
-   -- TODO: Add mode Output_stage = ON_PICK_DETECTED. Board send an information only if a pick is detected.
+   -- TODO: Add mode Output_stage = ON_PICK_DETECTED. The sensor sends an information only if a pick is detected.
    -- Need to refactor the Pantompkins where the sensor handle the outputstage instead of the algorithm.
    -- TODO: Add the dataset name at the beginning of the data signal ?
 
@@ -121,11 +125,20 @@ package body Ecg_Sensor is
    end Transmit_Float_32;
 
    function Next_Value return IEEE_Float_32 is
-   Result : IEEE_Float_32 := 0.0;
+   Input : IEEE_Float_32;
    begin
-      Result := PanTompkins.Process_Sample (AdaData.Data (Sample_Index));
-      Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1; 
-      return Result;
+      case Input_Channel.Get_Value is
+         when CH_FLASH =>
+            Input := AdaData.Data (Sample_Index);
+            Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1; 
+         when CH_BTN =>
+            if not Set (Peripherals.User_Btn) then
+               Input := 5000.0;
+            else
+               Input := 0.0;
+            end if;
+      end case;
+      return PanTompkins.Process_Sample (Input);
    end Next_Value;
 
    procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
@@ -136,7 +149,7 @@ package body Ecg_Sensor is
    begin
       case Output_Format.Get_Value is
          when OUT_ASCII =>
-            Send_Command (Time_Stamp'Image & ";" & Result'Image);
+            Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Pick_Detected'Image);
          when FLOAT32 =>
             Write_UInt64 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
             Log (USBCOM, ";");
@@ -173,7 +186,7 @@ package body Ecg_Sensor is
                Current_State := RUNNING;
                
                Sample_Index := 1;
-               PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
+               PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Get_Value), 
                                        Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
                                        Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
                                        Window_Sec => Window_Sec.Get_Value, 
@@ -213,6 +226,22 @@ package body Ecg_Sensor is
       end;
    end Change_State;
 
+   procedure Process_Sample is 
+   Result : IEEE_Float_32 := 0.0;
+   Status : UART_Status;
+   Sample_Period : Time_Span := To_Time_Span(1.0 / Sample_Rate.Get_Value);
+   begin
+      if (Clock - Process_Start_Time) > Sample_Period then
+         Process_Start_Time := Clock;
+         Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
+         
+         if PanTompkins.Is_Pick_Detected then
+            LED_Ctrl.Start_Blinking;
+         end if;         
+         -- LED_Ctrl.Set_Frequency (Float (PanTompkins.Get_Heart_Rate / 60.0));
+      end if;
+   end Process_Sample;
+
    procedure Initialize is
    begin
       USBCOM.Enable_Interrupt;
@@ -221,6 +250,9 @@ package body Ecg_Sensor is
       LED_Ctrl.Initialize;
       LED_Ctrl.Set_Frequency (10.0);
 
+      Enable_Clock (Peripherals.User_Btn);
+      Configure_IO (Peripherals.User_Btn, (Mode_In, Resistors => Pull_Down));
+
       -- Parameters
       Amplitude_Coef.Register;
       Sample_Rate.Register;
@@ -228,6 +260,7 @@ package body Ecg_Sensor is
       Window_Sec.Register;
       Output_Stage.Register;
       Output_Format.Register;
+      Input_Channel.Register;
 
       -- Action
       Get_Args.Register;
@@ -246,21 +279,6 @@ package body Ecg_Sensor is
                                           Output_Stage => Output_Stage.Get_Value));
    end Initialize;
 
-   procedure Process_Sample is 
-   Result : IEEE_Float_32 := 0.0;
-   Status : UART_Status;
-   Sample_Period : Time_Span := To_Time_Span(1.0 / Sample_Rate.Get_Value);
-   begin
-      if (Clock - Process_Start_Time) > Sample_Period then
-         Process_Start_Time := Clock;
-         Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
-         
-         if PanTompkins.Is_Pick_Detected then
-            LED_Ctrl.Start_Blinking;
-         end if;         
-         -- LED_Ctrl.Set_Frequency (Float (PanTompkins.Get_Heart_Rate / 60.0));
-      end if;
-   end Process_Sample;
 
    procedure Update_Blocking is
    begin

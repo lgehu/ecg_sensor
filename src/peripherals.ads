@@ -28,6 +28,8 @@ package Peripherals is
    LED_Pin : aliased GPIO_Point := PA5;
    --LED_Timer : aliased Timer := Timer_7;
    Timer_Interrupt : constant Interrupt_ID := TIM7_Interrupt;
+
+   User_Btn : constant GPIO_Point := PC13;
    
    LED_Ctrl : LED_Controller.Controller (Timer_7'Access, Timer_Interrupt, LED_Pin'Access);
 
