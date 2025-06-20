@@ -2,6 +2,7 @@ with STM32.Device;         use STM32.Device;
 with STM32.GPIO;           use STM32.GPIO;
 with STM32.USARTs;         use STM32.USARTs;
 with STM32.Timers;         use STM32.Timers;
+with STM32.ADC; use STM32.ADC;
 
 with Ada.Interrupts;       use Ada.Interrupts;
 with Ada.Interrupts.Names; use Ada.Interrupts.Names;
@@ -10,7 +11,12 @@ with LED_Controller;       use LED_Controller;
 with UART_USB;             use UART_USB;
 
 package Peripherals is
-   
+
+   -- ADC
+   ADC_Converter     : Analog_To_Digital_Converter renames ADC_1;
+   ADC_Input_Channel : constant Analog_Input_Channel := 0;
+   ADC_Input         : constant GPIO_Point := PA0;
+        
    -- UART GPIO
    TX_Pin : aliased GPIO_Point := PA2;
    RX_Pin : aliased GPIO_Point := PA3;

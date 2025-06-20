@@ -5,7 +5,7 @@ with AdaData;
 
 package Ecg_Sensor is
 
-   type Input_Channel_Type is (CH_BTN, CH_FLASH);
+   type Input_Channel_Type is (CH_BTN, CH_FLASH, CH_ADC);
 
    procedure Initialize;
 

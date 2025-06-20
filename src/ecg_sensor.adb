@@ -16,6 +16,7 @@ with Peripherals; use Peripherals;
 with PanTompkins;
 with Ada.Unchecked_Conversion;
 with UART_USB; use UART_USB;
+with ADC_Controller;
 
 package body Ecg_Sensor is
 
@@ -23,18 +24,11 @@ package body Ecg_Sensor is
    -- TODO: Add Unregister procedure 
    -- TODO: Add this crate to the private alire index
    -- TODO: Add input and output channel (ADC, SPI ...)
-   -- TODO: Add mode Output_stage = ON_PICK_DETECTED. The sensor sends an information only if a pick is detected.
-   -- Need to refactor the Pantompkins where the sensor handle the outputstage instead of the algorithm.
    -- TODO: Add the dataset name at the beginning of the data signal ?
    -- TODO: Optimize function Process Sample. It take up to 0.0049 seconds with -02.
    -- Thus, the sensor is limited to 200 Hz if sampling in real time (other than sampling the flash). 
    -- For example, sampling the ADC at 1000 Hz will skip ~5 sample, picks will be detected with smaller interval and calcul higher heart rate.
    -- The problem might come from the UART.
-
-   ECG_VERSION : constant String := "0.1";
-   CR_LF : constant String := ASCII.CR & ASCII.LF;
-
-   CMD_END : constant Character := ASCII.Semicolon;
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
@@ -42,12 +36,14 @@ package body Ecg_Sensor is
    package UART_STR renames UART_USB.B_Str;
    package Cmd_Str renames Commands_Interpreter.Command_String;
 
+   ECG_VERSION : constant String := "0.1";
+   CR_LF : constant String := ASCII.CR & ASCII.LF;
+   CMD_END : constant Character := ASCII.Semicolon;
+   Epoch : constant Time := Clock;              -- Start time for sending timestamp       
+
    Sample_Index : Positive := 1;                -- Current index in the sample data 
-   Raw_Input : UART_USB.UART_String;            -- Buffer to store incoming commands
    Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
    Process_Start_Time : Time := Clock;          -- Precedent sample sent time
-   
-   Epoch : Time := Clock;
 
    Last_Btn_State : Boolean;
 
@@ -144,6 +140,8 @@ package body Ecg_Sensor is
                Input := 0.0;
             end if;
             Last_Btn_State := Set (Peripherals.User_Btn);
+         when CH_ADC =>
+               Input := IEEE_Float_32 (ADC_Controller.Read_Value_Blocking);
       end case;
       return PanTompkins.Process_Sample (Input);
    end Next_Value;
@@ -262,10 +260,12 @@ package body Ecg_Sensor is
 
       -- Controllers
       LED_Ctrl.Initialize;
-      LED_Ctrl.Set_Frequency (10.0);
+      LED_Ctrl.Set_Frequency (15.0);
 
       Enable_Clock (Peripherals.User_Btn);
       Configure_IO (Peripherals.User_Btn, (Mode_In, Resistors => Pull_Down));
+
+      ADC_Controller.Initialize;
 
       -- Parameters
       Amplitude_Coef.Register;
