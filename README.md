@@ -40,7 +40,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | NEXT                | Request N sample. No need to start sampling. | 0 < Integer_Value |
 | VERSION             | Ask for the ecg version. | None |
 | SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value |
-| INPUT_CHANNEL       | Select the input source. It can be either CH_BTN for listening rising edge on the user button or CH_FLASH to read the board's flash. | CH_BTN &#124; CH_FLASH |
+| INPUT_CHANNEL       | Select the input source. It can be either CH_BTN for listening rising edge on the user button or CH_FLASH to read the board's flash. | CH_BTN &#124; CH_FLASH &#124; CH_ADC |
 | ENABLE_TRIGGER      | The sensor will send data only if a pick is detected. Works either while auto sampling or using NEXT commands. | TRUE &#124; FALSE |
 
 **ECG commands**  
