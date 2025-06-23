@@ -28,6 +28,8 @@ package body PanTompkins is
 
    Integrated_Index : Natural := 0;
 
+   Cumulated_Squared : IEEE_Float_32 := 0.0;
+
    -- RR FIFO
    type RR_Array is array (0 .. RR_FIFO_Size - 1) of IEEE_Float_32;
    RR_Values      : RR_Array := (others => 0.0);
@@ -68,6 +70,7 @@ package body PanTompkins is
       Last_Peak_Sample := 0;
       Heart_Rate := 0.0;
       Integrated_Index := 0;
+      Cumulated_Squared := 0.0;
    end Initialize;
 
    function Low_Pass return IEEE_Float_32 is
@@ -155,24 +158,23 @@ package body PanTompkins is
          return Squared;
       end if;
 
+      -- FIFO 
       for I in 0 .. Window_Size - 2 loop
          Squared_Buffer(I) := Squared_Buffer(I + 1);
       end loop;
 
-      Squared_Buffer(Window_Size - 1) := Squared;
+      Squared_Buffer (Window_Size - 1) := Squared;
 
-      for I of Squared_Buffer.all loop
-         Integrated := Integrated + I;
-      end loop;
-
-      Integrated := Integrated / IEEE_Float_32(Squared_Buffer'Length);
-
+      Cumulated_Squared := Cumulated_Squared - Squared_Buffer (0) + Squared;
+      
+      Integrated := Cumulated_Squared / IEEE_Float_32(Squared_Buffer'Length);
      
+      Threshold :=  Max_Integrated * Parameters.Amplitude_Treshold_Coef;
+      
       Integrated_Buffer (Integrated_Index) := Integrated;
       Integrated_Index := (Integrated_Index + 1) mod Integrated_Buffer'Length;
 
       --Threshold := Integrated * Parameters.Amplitude_Treshold_Coef;
-      Threshold :=  Average_Integrated * Parameters.Amplitude_Treshold_Coef;
 
       -- Clear precedent detection flag
       if Pick_Detected then
