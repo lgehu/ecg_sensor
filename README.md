@@ -4,7 +4,7 @@ Data are transmit through UART with a python script, then, the MCU process the d
 
 ## SCRIPTS ##
 - ecg_com.py : Interactive command prompt that send and receive commands to the ECG Sensor. You must build the main program to communicate with the sensor.
-- ecg_plot.py : Example script that automatically configure the sensor and plot processed ecg signal. Works 
+- ecg_plot.py : Example script that automatically configure the sensor and plot the processed ecg signal.
 - uart_test.py: Is intented for testing the UART and transmist signed integer on 16 bits.  
 - filters_proto.py: Is for testing algorithm of filter to be implemented on Ada.  
 - read_ecg_sensor.py: Read an ECG signal from the board and display it 
@@ -12,11 +12,11 @@ Data are transmit through UART with a python script, then, the MCU process the d
 to_ada.py: Is for converting any file to an ada array
 
 ## COMMANDS ##
-To exchange commands to the sensor, you first need to build the main project. Once, you can use any terminal program which support UART.  
-You can use screen or minicom on linux or termite on Windows. The easiest way would be to use the dedicated script "ecg_com" to send commands.  
+To exchange commands to the sensor, you first need to build the main project. Once done, you can use any terminal program which support UART.
+Then, you can use the dedicated script "ecg_com.py" to send commands in an interactive terminal. You also can use minicom or screen on linux or termite on windows.
 
 ### Protocol ##
-The protocol is really simple and use ASCII format case sensitive. The caracteres '<' and '>' are start and terminating flags.  
+The protocol is really simple and use ASCII case sensitive. The caracteres '<' and '>' are start and terminating.  
 Every commands are stored in the board as a parameter on a KEY=VALUE format.
 A command can be either an action or a parameter depending on the formatting.
 Example:  
@@ -24,23 +24,23 @@ Sending <GET_ARGS> without value return all commands and parameter registered in
 Sending <GET_ARGS=SAMPLE_RATE> return the current stored value linked to the key 'SAMPLE_RATE'.  
 Sending <SAMPLE_RATE=> with the sign '=' and without value reset the parameter to his default value.
 If the command is either misswritten or does not exist, the board respond with an error. 
-The command interpreter on the board side perform a type check on reception before storing the new value.  
-It mean that no value will be updated if you send a value of incorrect format or out of bounds.
+The command interpreter on the board side perform a type check on receive before storing the new value.  
+Thus, no value will be updated if you send a value of incorrect format or out of bounds.
 Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greater than 0) is expected.
 
 **General commands**    
 | Commands/Parameters |  Description  | Argument type
 | :---:               | ------------- | :---:   |    
 | GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String |
-| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode, the format is <float_value>. On binary mode, 4 bytes is sent in Big endian format. Each sample are separated with the caractere ';'. Thus, data can extra byte in case of escape value. | OUT_ASCII &#124; FLOAT32 |
+| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode, the format is <float_value>. On binary mode, 4 bytes is sent in Big endian format. Each sample are separated with the caractere ';'. Thus, data can have extra byte in case of escape value. | OUT_ASCII &#124; FLOAT32 |
 | RESET               | Restart the board | None |
 | START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied. The result format in ASCII is : <Time_stamp;Value;Is_Pick_Detected> where Time_stamp is the time difference since the board started in microsecond, value is the processed data of the selected stage and Is_Pick_Detected is a boolean value with value True when a pick is detected. | None |  
-| STOP                | Stop automatic sampling. Reset the sample index to 0. | None |
+| STOP                | Stop automatic sampling. Reset the sample index to 0 if the flash channel is selected. | None |
 | PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
 | NEXT                | Request N sample. No need to start sampling. | 0 < Integer_Value |
 | VERSION             | Ask for the ecg version. | None |
 | SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value |
-| INPUT_CHANNEL       | Select the input source. It can be either CH_BTN for listening rising edge on the user button or CH_FLASH to read the board's flash. | CH_BTN &#124; CH_FLASH &#124; CH_ADC |
+| INPUT_CHANNEL       | Select the input source. If CH_BTN is selected, the program is listening for rising edge on the user button. The CH_FLASH channel read the board's flash. | CH_BTN &#124; CH_FLASH &#124; CH_ADC |
 | ENABLE_TRIGGER      | The sensor will send data only if a pick is detected. Works either while auto sampling or using NEXT commands. | TRUE &#124; FALSE |
 
 **ECG commands**  
@@ -56,8 +56,7 @@ Sample rate higher than 200 introduce wrong heart rate on the STM32f446RE withou
 Read input channel + process data + send the data, takes up to 5 ms. Thus, data with higher sample rate will not be processed. In case picks are detected,
 they will be seen as closer because less data are sampled.
 The current solution is to enable the trigger to send less data on the UART and give more MCU time for processing data.  
-
-To improve sample rate would be to parallelized the 3 steps defined above and add a queue to send data on the UART interruption.
+To improve the sample rate, we could parallelized the 3 steps defined above and add a queue to send data on the UART interruption.
 
 ## PREREQUISITES (Linux) ##
 You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
