@@ -80,6 +80,11 @@ package Ecg_Sensor is
                   Default_Value => FALSE,
                   Action_Fn     => Return_Arg'Access
                );
+
+      package Input_Gain is new Commands_Interpreter.Real_Accessor (T => IEEE_Float_32,
+                  Key            => "INPUT_GAIN",
+                  Default_Value  =>  1.0,
+                  Action_Fn      => Return_Arg'Access);
       
       package Start_Cmd is new Commands_Interpreter.Action_Accessor (
                   Key            => "START", 

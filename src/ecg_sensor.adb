@@ -143,7 +143,7 @@ package body Ecg_Sensor is
          when CH_ADC =>
                Input := IEEE_Float_32 (ADC_Controller.Read_Value_Blocking);
       end case;
-      return PanTompkins.Process_Sample (Input);
+      return PanTompkins.Process_Sample (Input * Input_Gain.Get_Value);
    end Next_Value;
 
    procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
@@ -276,6 +276,7 @@ package body Ecg_Sensor is
       Output_Format.Register;
       Input_Channel.Register;
       Enable_Trigger.Register;
+      Input_Gain.Register;
 
       -- Action
       Get_Args.Register;

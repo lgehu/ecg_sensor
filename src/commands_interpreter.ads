@@ -4,7 +4,7 @@ with Interfaces;
 
 package Commands_Interpreter is
 
-   Max_Arg : constant Positive := 15;
+   Max_Arg : constant Positive := 20;
 
    Commands_Exception : exception; 
 
