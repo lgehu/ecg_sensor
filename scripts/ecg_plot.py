@@ -8,7 +8,8 @@ if __name__ == "__main__":
     # Open port (Linux only)
     with Serial("/dev/ttyACM0", baudrate=115200, timeout=1) as ser:
         
-        MAX_SAMPLE = 5000
+        OUTPUT_FORMAT = "FLOAT32"
+        MAX_SAMPLE = 10000
 
         values     = [0] * MAX_SAMPLE
         timestamps = [0] * MAX_SAMPLE
@@ -18,32 +19,34 @@ if __name__ == "__main__":
         ser.reset_output_buffer()
 
         ecg_com.send_command(ser, "STOP",                    True)
-        ecg_com.send_command(ser, "OUTPUT_FORMAT=OUT_ASCII", True)
-        ecg_com.send_command(ser, "SAMPLE_RATE=200",        True)
+        ecg_com.send_command(ser, f"OUTPUT_FORMAT={OUTPUT_FORMAT}", True)
+        ecg_com.send_command(ser, "SAMPLE_RATE=1000",        True)
         ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_HR",   True)
         ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",    True)
         ecg_com.send_command(ser, "AMPLITUDE_COEF=0.5",      True)
         ecg_com.send_command(ser, "INPUT_GAIN=0.1",          True)
         ecg_com.send_command(ser, "PICK_DISTANCE=0.260",     True)
-        ecg_com.send_command(ser, "WINDOW_SEC=0.1",        True)
+        ecg_com.send_command(ser, "WINDOW_SEC=0.15",        True)
         #ecg_com.send_command(ser, "ENABLE_TRIGGER=TRUE", True)
-        ecg_com.send_command(ser, "START",                   True)
+        ecg_com.send_command(ser, "START")
 
         for i in range(MAX_SAMPLE):
-            rawdata = ecg_com.wait_response(ser)
-            if rawdata != '' or rawdata.startswith("NaN"):
-                timestamp, value, is_pick = rawdata.split(";")
-                values[i] = float(value)
-                timestamps[i] = int(timestamp)
+            if OUTPUT_FORMAT == "FLOAT32":
+                values[i] = ecg_com.read_float_32(ser)
+                print(values[i])
+            else:
+                rawdata = ecg_com.wait_response(ser)
+                if rawdata != '' or rawdata.startswith("NaN"):
+                    timestamp, value, is_pick = rawdata.split(";")
+                    values[i] = float(value)
+                    timestamps[i] = int(timestamp)
 
-                if is_pick == 'TRUE':
-                    pick_stamp.append(i)
-
+                    if is_pick == 'TRUE':
+                        pick_stamp.append(i)
                 print(timestamp, value, is_pick)
 
-        ecg_com.send_command(ser, "STOP")
 
-        timestamps = [i for i in range(MAX_SAMPLE)]
+        ecg_com.send_command(ser, "STOP")
 
         plt.plot(values[500:], 'r')
 

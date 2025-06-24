@@ -9,20 +9,20 @@ import threading
 import time
 
 def read_float_32(ser : Serial) -> float:
-    data = bytearray()
-    for i in range (4):
-        b = ser.read(1)
-        if b == 0x7D:
-            next = ser.read(1)
-            if next == (0x7D + 1):
-                data.extend(0x3B)
-            elif next == (0x7D + 2):
-                data.extend(0x7D)
-        elif b == b'' or b == 0x3B:
-            return 0 # If we read a semicolon, we must be out of sync
-        else:
-            data.extend(b)
-    return struct.unpack ('>f', bytes(data))[0]
+    #data = bytearray()
+    # for i in range (4):
+    #     b = ser.read(1)
+    #     if b == 0x7D:
+    #         next = ser.read(1)
+    #         if next == (0x7D + 1):
+    #             data.extend(0x3B)
+    #         elif next == (0x7D + 2):
+    #             data.extend(0x7D)
+    #     elif b == b'' or b == 0x3B:
+    #         return 0 # If we read a semicolon, we must be out of sync
+    #     else:
+    #         data.extend(b)
+    return float(struct.unpack ('>f', ser.read(4))[0])
 
 def send_command(ser : Serial, cmd : str, wait_ok : bool = False):
     #print(">" + cmd)

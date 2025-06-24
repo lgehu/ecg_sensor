@@ -161,10 +161,10 @@ package body Ecg_Sensor is
          when OUT_ASCII =>
             Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Pick_Detected'Image);
          when FLOAT32 =>
-            Write_UInt64 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
-            Log (USBCOM, ";");
+            --Write_UInt64 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
+            --Log (USBCOM, ";");
             Transmit_Float_32 (Result);
-            Log (USBCOM, CMD_END & "");
+            --Log (USBCOM, CMD_END & "");
          when others =>
             null;
       end case;
