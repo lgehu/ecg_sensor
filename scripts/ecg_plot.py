@@ -24,16 +24,17 @@ if __name__ == "__main__":
         ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_HR",   True)
         ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",    True)
         ecg_com.send_command(ser, "AMPLITUDE_COEF=0.5",      True)
-        ecg_com.send_command(ser, "INPUT_GAIN=0.1",          True)
+        ecg_com.send_command(ser, "INPUT_GAIN=1.0",          True)
         ecg_com.send_command(ser, "PICK_DISTANCE=0.260",     True)
-        ecg_com.send_command(ser, "WINDOW_SEC=0.15",        True)
+        ecg_com.send_command(ser, "WINDOW_SEC=0.15",         True)
         #ecg_com.send_command(ser, "ENABLE_TRIGGER=TRUE", True)
-        ecg_com.send_command(ser, "START")
+        ecg_com.send_command(ser, "START",                   True)
 
         for i in range(MAX_SAMPLE):
             if OUTPUT_FORMAT == "FLOAT32":
+                timestamps[i] = ecg_com.read_uint_32(ser)
                 values[i] = ecg_com.read_float_32(ser)
-                print(values[i])
+                print(timestamps[i], values[i])
             else:
                 rawdata = ecg_com.wait_response(ser)
                 if rawdata != '' or rawdata.startswith("NaN"):
@@ -43,8 +44,8 @@ if __name__ == "__main__":
 
                     if is_pick == 'TRUE':
                         pick_stamp.append(i)
-                print(timestamp, value, is_pick)
 
+                print(timestamp, value, is_pick)
 
         ecg_com.send_command(ser, "STOP")
 

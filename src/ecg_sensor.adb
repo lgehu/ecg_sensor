@@ -135,7 +135,7 @@ package body Ecg_Sensor is
             Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1; 
          when CH_BTN =>
             if not Set (Peripherals.User_Btn) and Last_Btn_State then
-               Input := 5000.0;
+               Input := 100.0;
             else
                Input := 0.0;
             end if;
@@ -147,10 +147,10 @@ package body Ecg_Sensor is
    end Next_Value;
 
    procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
+   Time_Stamp : UInt32 := UInt32 (To_Duration ((Clock - Epoch) * 1_000)); -- Time Stamp in millisecond
    Result : IEEE_Float_32 := Next_Value;
-   Time_Stamp : UInt64 := UInt64 (To_Duration ((Clock - Epoch) * 1_000_000)); -- Time Stamp in microsecond
    Status : UART_Status;
-   procedure Write_UInt64 is new UART_USB.Write (T => UInt64);
+   procedure Write_UInt_32 is new UART_USB.Write (T => UInt32);
    begin
 
       if Enable_Trigger.Get_Value and not PanTompkins.Is_Pick_Detected then
@@ -161,8 +161,8 @@ package body Ecg_Sensor is
          when OUT_ASCII =>
             Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Pick_Detected'Image);
          when FLOAT32 =>
-            --Write_UInt64 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
             --Log (USBCOM, ";");
+            Write_UInt_32 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
             Transmit_Float_32 (Result);
             --Log (USBCOM, CMD_END & "");
          when others =>
@@ -246,11 +246,11 @@ package body Ecg_Sensor is
          Process_Start_Time := Clock;
 
          Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
-         -- Log (USBCOM, "Elapsed Time: " &  To_Duration (Elapsed_Time)'Image);
+
          if PanTompkins.Is_Pick_Detected then
             LED_Ctrl.Start_Blinking;
          end if;         
-         -- LED_Ctrl.Set_Frequency (Float (PanTompkins.Get_Heart_Rate / 60.0));
+
       end if;
    end Process_Sample;
 

@@ -8,6 +8,9 @@ from prompt_toolkit.patch_stdout import patch_stdout
 import threading
 import time
 
+def read_uint_32(ser : Serial) -> int:
+    return int(struct.unpack('>i', ser.read(4))[0])
+
 def read_float_32(ser : Serial) -> float:
     #data = bytearray()
     # for i in range (4):

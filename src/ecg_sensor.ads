@@ -5,6 +5,7 @@ with AdaData;
 
 package Ecg_Sensor is
 
+   subtype Sample_Rate_Type is Positive range 10 .. 1000;  
    type Input_Channel_Type is (CH_BTN, CH_FLASH, CH_ADC);
 
    procedure Initialize;
@@ -29,7 +30,7 @@ package Ecg_Sensor is
 
       procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
-      package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Positive,
+      package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Sample_Rate_Type,
                   Key            => "SAMPLE_RATE",
                   Default_Value  => AdaData.Sample_Rate,
                   Action_Fn      => Return_Arg'Access
