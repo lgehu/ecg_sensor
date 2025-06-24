@@ -1,7 +1,7 @@
-with Ecg_Sensor;
-with LED_Controller;
-with Peripherals; use Peripherals;
 with Ada.Exceptions; use Ada.Exceptions; 
+
+with Ecg_Sensor;
+with Peripherals; use Peripherals;
 with UART_USB; use UART_USB;
 
 procedure Main is

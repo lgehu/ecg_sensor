@@ -19,12 +19,13 @@ if __name__ == "__main__":
 
         ecg_com.send_command(ser, "STOP",                    True)
         ecg_com.send_command(ser, "OUTPUT_FORMAT=OUT_ASCII", True)
-        ecg_com.send_command(ser, "SAMPLE_RATE=1000",        True)
-        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_INTEGRATED",   True)
-        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_FLASH",  True)
-        ecg_com.send_command(ser, "AMPLITUDE_COEF=1.5",      True)
-        ecg_com.send_command(ser, "INPUT_GAIN=0.01",          True)
+        ecg_com.send_command(ser, "SAMPLE_RATE=200",        True)
+        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_HR",   True)
+        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",    True)
+        ecg_com.send_command(ser, "AMPLITUDE_COEF=0.5",      True)
+        ecg_com.send_command(ser, "INPUT_GAIN=0.1",          True)
         ecg_com.send_command(ser, "PICK_DISTANCE=0.260",     True)
+        ecg_com.send_command(ser, "WINDOW_SEC=0.1",        True)
         #ecg_com.send_command(ser, "ENABLE_TRIGGER=TRUE", True)
         ecg_com.send_command(ser, "START",                   True)
 

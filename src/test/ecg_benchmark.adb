@@ -21,7 +21,7 @@ begin
 
    USBCOM.Initialize (115_200);
 
-   PanTompkins.Initialize ((Sampling_Frequency => 500, 
+   PanTompkins.Initialize ((Sampling_Frequency => 100.0, 
                            Amplitude_Treshold_Coef => 1.5,
                            Minimal_Pick_Distance_Sec => 0.4,
                            Window_Sec => 0.3,
@@ -38,6 +38,6 @@ begin
       end loop;
    end loop;
    -- Results: 
-   -- without optimisation : ~32 us
-   -- With optimization (-02): ~8 us
+   -- without optimisation : ~32 us 
+   -- With optimization (-02): ~2.4 us
 end Main;
