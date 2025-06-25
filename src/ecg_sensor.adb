@@ -150,7 +150,10 @@ package body Ecg_Sensor is
    Time_Stamp : UInt32 := UInt32 (To_Duration ((Clock - Epoch) * 1_000)); -- Time Stamp in millisecond
    Result : IEEE_Float_32 := Next_Value;
    Status : UART_Status;
+   
    procedure Write_UInt_32 is new UART_USB.Write (T => UInt32);
+   procedure Write_Float_32 is new UART_USB.Write (T => IEEE_Float_32);
+
    begin
 
       if Enable_Trigger.Get_Value and not PanTompkins.Is_Pick_Detected then
@@ -163,7 +166,9 @@ package body Ecg_Sensor is
          when FLOAT32 =>
             --Log (USBCOM, ";");
             Write_UInt_32 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
-            Transmit_Float_32 (Result);
+            Write_Float_32 (USBCOM, Result, BIG_ENDIAN, Status);
+            USBCOM.Put_Blocking ((if PanTompkins.Is_Pick_Detected then 1 else 0), Status, Time_Span_Last);
+            --Transmit_Float_32 (Result);
             --Log (USBCOM, CMD_END & "");
          when others =>
             null;
