@@ -4,18 +4,17 @@ with System;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Real_Time; use Ada.Real_Time;
 with Ada.Strings.Bounded;
+with Ada.Unchecked_Conversion;
 
-with HAL; use HAL;
-with HAL.UART; use HAL.UART;
-with STM32.Board; use STM32.Board;
+with HAL;           use HAL;
+with HAL.UART;      use HAL.UART;
+with STM32.Board;   use STM32.Board;
 with STM32.Device;  use STM32.Device;
 with STM32.GPIO;    use STM32.GPIO;
 
-
-with Peripherals; use Peripherals;
+with Peripherals;   use Peripherals;
+with UART_USB;      use UART_USB;
 with PanTompkins;
-with Ada.Unchecked_Conversion;
-with UART_USB; use UART_USB;
 with ADC_Controller;
 
 package body Ecg_Sensor is
@@ -27,8 +26,14 @@ package body Ecg_Sensor is
    -- TODO: Add the dataset name at the beginning of the data signal ?
    -- TODO: Optimize function Process Sample. It take up to 0.0049 seconds with -02.
    -- Thus, the sensor is limited to 200 Hz if sampling in real time (other than sampling the flash). 
-   -- For example, sampling the ADC at 1000 Hz will skip ~5 sample, picks will be detected with smaller interval and calcul higher heart rate.
+   -- For example, sampling the ADC at 1000 Hz will skip ~5 sample, Peaks will be detected with smaller interval and calcul higher heart rate.
    -- The problem might come from the UART.
+
+   -- TODO: Detect peak all ways even in STAGE_RAW
+   -- TODO: Correct ROW TO RAW
+   -- TODO: Add Interruptions for sampling, add a queue and compute value in the main loop
+   -- TODO: Timestamp EPOCH is actualised on start sampling
+   -- TODO: Test higher baudrate
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
@@ -39,7 +44,7 @@ package body Ecg_Sensor is
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
    CMD_END : constant Character := ASCII.Semicolon;
-   Epoch : constant Time := Clock;              -- Start time for sending timestamp       
+   Epoch : Time := Clock;              -- Start time for sending timestamp       
 
    Sample_Index : Positive := 1;                -- Current index in the sample data 
    Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
@@ -156,20 +161,17 @@ package body Ecg_Sensor is
 
    begin
 
-      if Enable_Trigger.Get_Value and not PanTompkins.Is_Pick_Detected then
+      if Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected then
          return;
       end if;
 
       case Output_Format.Get_Value is
          when OUT_ASCII =>
-            Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Pick_Detected'Image);
+            Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Peak_Detected'Image);
          when FLOAT32 =>
-            --Log (USBCOM, ";");
             Write_UInt_32 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
             Write_Float_32 (USBCOM, Result, BIG_ENDIAN, Status);
-            USBCOM.Put_Blocking ((if PanTompkins.Is_Pick_Detected then 1 else 0), Status, Time_Span_Last);
-            --Transmit_Float_32 (Result);
-            --Log (USBCOM, CMD_END & "");
+            USBCOM.Put_Blocking ((if PanTompkins.Is_Peak_Detected then 1 else 0), Status, Time_Span_Last);
          when others =>
             null;
       end case;
@@ -189,6 +191,17 @@ package body Ecg_Sensor is
       end if;
    end Read_Command;
 
+   procedure Init_Sampling (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
+   begin
+      Sample_Index := 1;
+      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Get_Value), 
+                              Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
+                              Minimal_Peak_Distance_Sec => Peak_Distance.Get_Value, 
+                              Window_Sec => Window_Sec.Get_Value, 
+                              Output_Stage => Output_Stage.Get_Value));
+      Epoch := Clock;
+   end Init_Sampling;
+
    procedure Change_State (Input : Commands_Interpreter.Argument; Valid : Boolean) is
    Intended_State : Sensor_State_Type;
    Old_State : Sensor_State_Type := Current_State;
@@ -199,15 +212,7 @@ package body Ecg_Sensor is
             Intended_State := RUNNING;
             if Current_State = IDLE then
                Current_State := RUNNING;
-               
-               Sample_Index := 1;
-               PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Get_Value), 
-                                       Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
-                                       Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
-                                       Window_Sec => Window_Sec.Get_Value, 
-                                       Output_Stage => Output_Stage.Get_Value));
-
-
+               Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True);             
             elsif Current_State = PAUSED then
                Current_State := RUNNING;
             end if;
@@ -252,7 +257,7 @@ package body Ecg_Sensor is
 
          Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
 
-         if PanTompkins.Is_Pick_Detected then
+         if PanTompkins.Is_Peak_Detected then
             LED_Ctrl.Start_Blinking;
          end if;         
 
@@ -275,7 +280,7 @@ package body Ecg_Sensor is
       -- Parameters
       Amplitude_Coef.Register;
       Sample_Rate.Register;
-      Pick_Distance.Register;
+      Peak_Distance.Register;
       Window_Sec.Register;
       Output_Stage.Register;
       Output_Format.Register;
@@ -291,15 +296,10 @@ package body Ecg_Sensor is
       Pause_Cmd.Register;
       Next_Cmd.Register;      
       Version_Cmd.Register;
+      Init_Cmd.Register;
 
-      -- Initialize algorithm with default values
-      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (AdaData.Sample_Rate), 
-                                          Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
-                                          Minimal_Pick_Distance_Sec => Pick_Distance.Get_Value, 
-                                          Window_Sec => Window_Sec.Get_Value, 
-                                          Output_Stage => Output_Stage.Get_Value));
+      Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True); 
    end Initialize;
-
 
    procedure Update_Blocking is
    begin

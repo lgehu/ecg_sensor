@@ -13,3 +13,4 @@ executables = ["ecg_sensor"]
 
 [[depends-on]]
 nucleo_f446re = "~0.1.0-dev"
+

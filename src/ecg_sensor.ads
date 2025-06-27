@@ -30,6 +30,8 @@ package Ecg_Sensor is
 
       procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
+      procedure Init_Sampling (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
+
       package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Sample_Rate_Type,
                   Key            => "SAMPLE_RATE",
                   Default_Value  => AdaData.Sample_Rate,
@@ -42,8 +44,8 @@ package Ecg_Sensor is
                   Action_Fn      => Return_Arg'Access
                );
 
-      package Pick_Distance is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Positive_Float,
-                  Key            => "PICK_DISTANCE",
+      package Peak_Distance is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Positive_Float,
+                  Key            => "PEAK_DISTANCE",
                   Default_Value  => 0.260,
                   Action_Fn      => Return_Arg'Access
                );
@@ -115,5 +117,9 @@ package Ecg_Sensor is
                   Action_Fn      => Send_Version'Access
                );
 
+      package Init_Cmd is new Commands_Interpreter.Action_Accessor (
+                  Key            => "INIT", 
+                  Action_Fn      =>  Init_Sampling'Access
+               );
 
 end Ecg_Sensor;

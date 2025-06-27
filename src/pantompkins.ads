@@ -2,7 +2,7 @@ with Interfaces; use Interfaces;
 
 package PanTompkins is
 
-   type Stage is (Stage_Row, 
+   type Stage is (Stage_Raw, 
                   Stage_Filtered, 
                   Stage_Derivatived, 
                   Stage_Squared, 
@@ -16,7 +16,7 @@ package PanTompkins is
    type Config is record
       Sampling_Frequency : Sampling_Frequency_Type := 100.0;
       Amplitude_Treshold_Coef : Amplitude_Treshold_Coef_Type := 1.5;
-      Minimal_Pick_Distance_Sec : Positive_Float := 0.260;
+      Minimal_Peak_Distance_Sec : Positive_Float := 0.260;
       Window_Sec : Positive_Float := 0.150;
       Output_Stage : Stage := Stage_Integrated;
    end record;
@@ -31,6 +31,6 @@ package PanTompkins is
    function Get_Heart_Rate return IEEE_Float_32;
 
    -- Works only in stage HR
-   function Is_Pick_Detected return Boolean;
+   function Is_Peak_Detected return Boolean;
 
 end PanTompkins;

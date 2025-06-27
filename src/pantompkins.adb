@@ -43,7 +43,7 @@ package body PanTompkins is
    Last_Peak_Sample : Natural := 0;
    Heart_Rate       : IEEE_Float_32 := 0.0;
 
-   Pick_Detected : Boolean := False;
+   Peak_Detected : Boolean := False;
 
    Is_First_Sample : Boolean := True;
 
@@ -52,7 +52,7 @@ package body PanTompkins is
       Parameters := Param;
       Fs := Param.Sampling_Frequency;
       Window_Size  := Natural(Fs * Param.Window_Sec);
-      Min_Distance := Natural(Fs * Param.Minimal_Pick_Distance_Sec);
+      Min_Distance := Natural(Fs * Param.Minimal_Peak_Distance_Sec);
 
       if Squared_Buffer /= null then
          Free_Buffer (Squared_Buffer);
@@ -71,7 +71,7 @@ package body PanTompkins is
       end loop;
 
       Raw_Buffer := (others => 0.0);
-      Deriv_Buffer := (others => 0.0);
+      Deriv_Buffer := (others => 0.0); 
       RR_Values := (others => 0.0);
       RR_Index := 0;
       RR_Count := 0;
@@ -151,7 +151,7 @@ package body PanTompkins is
          Is_First_Sample := False;
       end if;
 
-      if Parameters.Output_Stage = Stage_Row then
+      if Parameters.Output_Stage = Stage_Raw then
          return Sample;
       end if;
 
@@ -190,8 +190,8 @@ package body PanTompkins is
       Integrated_Index := (Integrated_Index + 1) mod Integrated_Buffer'Length;
 
       -- Clear precedent detection flag
-      if Pick_Detected then
-         Pick_Detected := False;
+      if Peak_Detected then
+         Peak_Detected := False;
       end if;
 
       Middle_Integrated_Index := (Integrated_Buffer'Length / 2 + Integrated_Index) mod Integrated_Buffer'Length;
@@ -199,7 +199,7 @@ package body PanTompkins is
       if Integrated_Buffer (Middle_Integrated_Index) > Threshold and 
          (Sample_Index - Last_Peak_Sample) > Min_Distance then
          
-         Pick_Detected := True;
+         Peak_Detected := True;
          if Last_Peak_Sample > 0 then
             declare
                RR : IEEE_Float_32 := IEEE_Float_32(Sample_Index - Last_Peak_Sample) / Fs;
@@ -225,14 +225,14 @@ package body PanTompkins is
       return Heart_Rate;
    end Get_Heart_Rate;
 
-   function Is_Pick_Detected return Boolean is
+   function Is_Peak_Detected return Boolean is
    begin
-      return Pick_Detected;
-   end Is_Pick_Detected;
+      return Peak_Detected;
+   end Is_Peak_Detected;
 
-   procedure Clear_Flag_Pick_Detection is
+   procedure Clear_Flag_Peak_Detection is
    begin
-      Pick_Detected := False;
-   end Clear_Flag_Pick_Detection;
+      Peak_Detected := False;
+   end Clear_Flag_Peak_Detection;
 
 end PanTompkins;
