@@ -32,8 +32,7 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | Commands/Parameters |  Description  | Argument type
 | :---:               | ------------- | :---:   |    
 | GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String |
-| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode,  the format is: <Time_stamp;Value;Is_peak_Detected> where Time_stamp is the time difference since the board started in millisecond, value is the processed data of the selected stage and Is_peak_Detected is a boolean value with value True when a peak is detected.
-On binary format, every sample takes 9 bytes. First 4 bytes are the timestamp in ms. Next 4 bytes are the actual float value and the last byte indicate if a peak is detected. Values are in big endian format. | OUT_ASCII &#124; FLOAT32 |
+| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode,  the format is: <Time_stamp;Value;Is_peak_Detected> where Time_stamp is the time difference since the board started in millisecond, value is the processed data of the selected stage and Is_peak_Detected is a boolean value with value True when a peak is detected. On binary format, every sample takes 9 bytes. First 4 bytes are the timestamp in ms. Next 4 bytes are the actual float value and the last byte indicate if a peak is detected. Values are in big endian format. | OUT_ASCII &#124; FLOAT32 |
 | RESET               | Restart the board | None |
 | START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied.  | None |  
 | STOP                | Stop automatic sampling. Reset the sample index to 0 if the flash channel is selected. | None |
@@ -78,10 +77,7 @@ Your_folder
     
 ## COMPILATION ##
 Plug your device to your computer, then to compile the Ada project run:   
-`make PRJ_NAME=ecg_test`
-You can replace 'ecg_test' with an other file in the src/test folder (without extension).  
-You should change in the makefile the port of your device if needed.
-
+`make`  
 ## Flashing an ECG file to the board ## 
 
 ### Testing with object linker 
