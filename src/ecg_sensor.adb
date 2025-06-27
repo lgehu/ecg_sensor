@@ -24,12 +24,7 @@ package body Ecg_Sensor is
    -- TODO: Add this crate to the private alire index
    -- TODO: Add input and output channel (ADC, SPI ...)
    -- TODO: Add the dataset name at the beginning of the data signal ?
-   -- TODO: Optimize function Process Sample. It take up to 0.0049 seconds with -02.
-   -- Thus, the sensor is limited to 200 Hz if sampling in real time (other than sampling the flash). 
-   -- For example, sampling the ADC at 1000 Hz will skip ~5 sample, Peaks will be detected with smaller interval and calcul higher heart rate.
-   -- The problem might come from the UART.
 
-   -- TODO: Detect peak all ways even in STAGE_RAW
    -- TODO: Add Interruptions for sampling, add a queue and compute value in the main loop
    -- TODO: Add error check in UART interrupt
 
