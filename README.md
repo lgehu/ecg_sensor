@@ -5,7 +5,7 @@ Data are transmit through UART with a python script, then, the MCU process the d
 ## SCRIPTS ##
 - ecg_com.py : Interactive command prompt that send and receive commands to the ECG Sensor. You must build the main program to communicate with the sensor.
 - ecg_plot.py : Example script that automatically configure the sensor and plot the processed ecg signal.
-- uart_test.py: Is intented for testing the UART and transmist signed integer on 16 bits.  
+- uart_test.py: Is intented for testing the UART and transmit signed integer on 16 bits.  
 - filters_proto.py: Is for testing algorithm of filter to be implemented on Ada.  
 - read_ecg_sensor.py: Read an ECG signal from the board and display it 
 - ecg_uart_test.py: Is for sending a whole ECG signal. 
@@ -32,31 +32,32 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | Commands/Parameters |  Description  | Argument type
 | :---:               | ------------- | :---:   |    
 | GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String |
-| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode, the format is <float_value>. On binary mode, 4 bytes is sent in Big endian format. Each sample are separated with the caractere ';'. Thus, data can have extra byte in case of escape value. | OUT_ASCII &#124; FLOAT32 |
+| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode,  the format is: <Time_stamp;Value;Is_peak_Detected> where Time_stamp is the time difference since the board started in millisecond, value is the processed data of the selected stage and Is_peak_Detected is a boolean value with value True when a peak is detected.
+On binary format, every sample takes 9 bytes. First 4 bytes are the timestamp in ms. Next 4 bytes are the actual float value and the last byte indicate if a peak is detected. Values are in big endian format. | OUT_ASCII &#124; FLOAT32 |
 | RESET               | Restart the board | None |
-| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied. The result format in ASCII is : <Time_stamp;Value;Is_Pick_Detected> where Time_stamp is the time difference since the board started in microsecond, value is the processed data of the selected stage and Is_Pick_Detected is a boolean value with value True when a pick is detected. | None |  
+| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied.  | None |  
 | STOP                | Stop automatic sampling. Reset the sample index to 0 if the flash channel is selected. | None |
 | PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
 | NEXT                | Request N sample. No need to start sampling. | 0 < Integer_Value |
 | VERSION             | Ask for the ecg version. | None |
 | SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value |
 | INPUT_CHANNEL       | Select the input source. If CH_BTN is selected, the program is listening for rising edge on the user button. The CH_FLASH channel read the board's flash. | CH_BTN &#124; CH_FLASH &#124; CH_ADC |
-| ENABLE_TRIGGER      | The sensor will send data only if a pick is detected. Works either while auto sampling or using NEXT commands. | TRUE &#124; FALSE |
+| ENABLE_TRIGGER      | The sensor will send data only if a peak is detected. Works either while auto sampling or using NEXT commands. | TRUE &#124; FALSE |
+| INPUT_GAIN          | Multiplier for input value. | Float |
+| INIT                | Reset the Pantompkins algorithm, start the sampling timer and reset the sample index to zero for the flash channel. Use it before calling NEXT. | None |
 
-**ECG commands**  
+**ECG commands**
  Commands/Parameters |  Description  | Argument type
 | :---:              | ------------- | :---:   |    
-| AMPLITUDE_COEF     | Set the multiplier for the amplitude threshold. This treshold is the mean of the integrated data during the Pan-Tompkins algorithm. | 0.0 < Float_Value < 2.0  |
-| PICK_DISTANCE      | Set the minimal time distance in second between to pick. | 0.0 < Float_Value |
+| AMPLITUDE_COEF     | Set the multiplier for the amplitude threshold. This treshold is the average of the integrated data (Moving window) during the Pan-Tompkins algorithm. | 0.0 < Float_Value < 2.0  |
+| PEAK_DISTANCE      | Set the minimal time distance in second between to peak. | 0.0 < Float_Value |
 |  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value |
 | OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Row &#124; Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR |
 
 **Limitations**  
-Sample rate higher than 200 introduce wrong heart rate on the STM32f446RE without trigger enabled and sampling on peripherals (not the flash). The whole process 
-Read input channel + process data + send the data, takes up to 5 ms. Thus, data with higher sample rate will not be processed. In case picks are detected,
-they will be seen as closer because less data are sampled.
-The current solution is to enable the trigger to send less data on the UART and give more MCU time for processing data.  
-To improve the sample rate, we could parallelized the 3 steps defined above and add a queue to send data on the UART interruption.
+Using the ASCII mode for outputting data induce a huge dealy by the UART. Thus, data acquired from peripherals will be missed and heart rate won't be reliable.
+Instead, outputting data on binary mode is faster and can process samples up to 1KHz.
+If you are only interested for peaks, enabling the trigger reduce the UART usage and improve sample frequency.
 
 ## PREREQUISITES (Linux) ##
 You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
@@ -132,13 +133,13 @@ It will generate an array of float32. Then, in the `ecg_script_test.adb`, we ite
 `read_ecg_sensor.py` will acquire data and convert it back to float.
 
 # Pan-Tompkins
-We implemented the Pan-Tompkins algorithm on the STM32F446RE. According to the paper, it filter the input data with a pass-band from 5 Hz to 15 Hz. Currently, its a simple IIR filter, but we could enhance it by using the DSP  and CMSIS library to implement a butterworth in some future. Then, it square the signal and perform a moving window to smooth the signal. Finally, to detect the pick, it compute one threshold based on the average amplitude, and the second treshold is a minimal distance between picks.
+We implemented the Pan-Tompkins algorithm on the STM32F446RE. According to the paper, it filter the input data with a pass-band from 5 Hz to 15 Hz. Currently, its a simple IIR filter, but we could enhance it by using the DSP  and CMSIS library to implement a butterworth in some future. Then, it square the signal and perform a moving window to smooth the signal. Finally, to detect the peak, it compute one threshold based on the average amplitude, and the second treshold is a minimal distance between peaks.
 
 ## Demo
 The ecg_test.adb program use an ECG signal generated by the to_ada.py script. Then, results of the processed signal is sent through UART and plotted to be compared with the Pan-Tompkins python version. 
 On the following picture, the first one is an ECG signal processed by the python algorithm from this [repo](https://github.com/lgehu/Pan-Tompkins-algorithm-python.git).   
 ![python-algo](https://github.com/user-attachments/assets/b64c858f-ec68-40bc-9dfc-82cd7c9bac8a)  
-The next one is the same ECG signal processed by the Ada implementation. We can see similar results: No false positive, same picks number and detected on the same time.
+The next one is the same ECG signal processed by the Ada implementation. We can see similar results: No false positive, same peaks number and detected on the same time.
 However, amplitude are different because lowpass and highpass are IIR functions instead of butterworth. Thus, gain response are not the same. 
 ![ada-algo](https://github.com/user-attachments/assets/8a5ad799-4a83-48e4-911f-79fcc074056d)  
 
