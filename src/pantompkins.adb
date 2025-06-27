@@ -151,30 +151,14 @@ package body PanTompkins is
          Is_First_Sample := False;
       end if;
 
-      if Parameters.Output_Stage = Stage_Raw then
-         return Sample;
-      end if;
-
       -- Shift buffers
       Raw_Buffer := Raw_Buffer(1 .. 4) & Sample;
       Filtered := High_Pass(Low_Pass);
 
-      if Parameters.Output_Stage = Stage_Filtered then
-         return Filtered;
-      end if;
-
       Deriv_Buffer := Deriv_Buffer(1 .. 3) & Filtered;
       Deriv := Derivative;
 
-      if Parameters.Output_Stage = Stage_Derivatived then
-         return Deriv;
-      end if;
-
       Squared := Deriv * Deriv;
-
-      if Parameters.Output_Stage = Stage_Squared then
-         return Squared;
-      end if;
 
       -- Pop the least sample and add the newest
       Cumulated_Squared := Cumulated_Squared - Squared_Buffer (Squared_Buffer_Index) + Squared;
@@ -213,11 +197,14 @@ package body PanTompkins is
 
       Sample_Index := Sample_Index + 1;
 
-      if Parameters.Output_Stage = Stage_Integrated then
-         return Integrated;
-      end if;
+      return (case Parameters.Output_Stage is
+             when Stage_Raw         => Sample,
+             when Stage_Filtered    => Filtered,
+             when Stage_Derivatived => Deriv,
+             when Stage_Squared     => Squared,
+             when Stage_Integrated  => Integrated,
+             when Stage_HR          => Heart_Rate);
 
-      return Heart_Rate;
    end Process_Sample;
 
    function Get_Heart_Rate return IEEE_Float_32 is

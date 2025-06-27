@@ -30,7 +30,6 @@ package PanTompkins is
    -- skip Fs * 2 value before getting coherant value. 
    function Get_Heart_Rate return IEEE_Float_32;
 
-   -- Works only in stage HR
    function Is_Peak_Detected return Boolean;
 
 end PanTompkins;

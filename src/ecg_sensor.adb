@@ -31,7 +31,6 @@ package body Ecg_Sensor is
 
    -- TODO: Detect peak all ways even in STAGE_RAW
    -- TODO: Add Interruptions for sampling, add a queue and compute value in the main loop
-   -- TODO: Timestamp EPOCH is actualised on start sampling
    -- TODO: Add error check in UART interrupt
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
