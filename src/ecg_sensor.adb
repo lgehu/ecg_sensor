@@ -30,10 +30,9 @@ package body Ecg_Sensor is
    -- The problem might come from the UART.
 
    -- TODO: Detect peak all ways even in STAGE_RAW
-   -- TODO: Correct ROW TO RAW
    -- TODO: Add Interruptions for sampling, add a queue and compute value in the main loop
    -- TODO: Timestamp EPOCH is actualised on start sampling
-   -- TODO: Test higher baudrate
+   -- TODO: Add error check in UART interrupt
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (IDLE, RUNNING, PAUSED);

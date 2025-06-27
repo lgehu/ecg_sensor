@@ -12,17 +12,19 @@ with UART_USB;             use UART_USB;
 
 package Peripherals is
 
+
    -- ADC
    ADC_Converter     : Analog_To_Digital_Converter renames ADC_1;
    ADC_Input_Channel : constant Analog_Input_Channel := 0;
    ADC_Input         : constant GPIO_Point := PA0;
         
-   -- UART GPIO
+   -- UART
    TX_Pin : aliased GPIO_Point := PA2;
    RX_Pin : aliased GPIO_Point := PA3;
    Transceiver : USART renames USART_2;
    Transceiver_Interrupt_Id : constant Interrupt_ID := USART2_Interrupt;
    Transceiver_AF : constant STM32.GPIO_Alternate_Function := GPIO_AF_USART1_7;
+   UART_BAUDRATE : Baud_Rates := 921_600; 
 
    USBCOM : UART_USB.Controller (TX_Pin'Access, 
                               RX_Pin'Access, 
@@ -34,9 +36,7 @@ package Peripherals is
    LED_Pin : aliased GPIO_Point := PA5;
    --LED_Timer : aliased Timer := Timer_7;
    Timer_Interrupt : constant Interrupt_ID := TIM7_Interrupt;
-
    User_Btn : constant GPIO_Point := PC13;
-   
    LED_Ctrl : LED_Controller.Controller (Timer_7'Access, Timer_Interrupt, LED_Pin'Access);
 
 end Peripherals;

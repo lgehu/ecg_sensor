@@ -6,7 +6,7 @@ with UART_USB; use UART_USB;
 
 procedure Main is
 begin
-   USBCOM.Initialize (115_200);
+   USBCOM.Initialize (UART_BAUDRATE);
 
    begin
       Ecg_Sensor.Initialize;
