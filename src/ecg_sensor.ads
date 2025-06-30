@@ -3,6 +3,14 @@ with Interfaces; use Interfaces;
 with PanTompkins;
 with AdaData;
 
+with Ada.Interrupts.Names; use Ada.Interrupts.Names;
+
+--  with STM32;                use STM32;
+--  with STM32.Device;         use STM32.Device;
+--  with STM32.Timers;         use STM32.Timers;
+--  with HAL;                  use HAL;
+
+
 package Ecg_Sensor is
 
    subtype Sample_Rate_Type is Positive range 10 .. 1000;  
@@ -14,6 +22,16 @@ package Ecg_Sensor is
    function Next_Value return IEEE_Float_32;
 
    procedure Update_Blocking;
+
+   -- Virtual ADC
+   --  protected Virtual_ADC is
+   --     pragma Interrupt_Priority;
+   --  private
+
+   --     procedure IRQ_Handler;
+   --     pragma Attach_Handler (IRQ_Handler, TIM2_Interrupt);
+
+   --  end Virtual_ADC;
 
    private
       type Output_Format_Type is (OUT_ASCII, FLOAT32);
