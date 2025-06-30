@@ -7,6 +7,8 @@ from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout 
 import threading
 import time
+import re
+import argparse
 
 def read_uint_32(ser : Serial) -> int:
     return int(struct.unpack('>i', ser.read(4))[0])
@@ -59,10 +61,43 @@ def log(ser : Serial):
         else:
             time.sleep(0.1)
 
+def valid_port(port):
+    # Accepts formats like COM3 (Windows) or /dev/ttyUSB0 (Unix)
+    if re.match(r"^COM\d+$", port) or re.match(r"^/dev/tty\w+$", port):
+        return port
+    else:
+        raise argparse.ArgumentTypeError(f"Invalid port: {port}. Expected formats: COM3 or /dev/ttyUSB0")
 
+def valid_baudrate(value):
+    try:
+        baud = int(value)
+        if baud > 0:
+            return baud
+        else:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid baudrate: {value}. Must be a positive integer.")
+
+
+# Plot data coming from the ECG sensor
+# This script can works if the board is running the main program (main.adb)
 if __name__ == "__main__":
-    # Open port (Linux only)
-    with Serial("/dev/ttyACM0", baudrate=115200, timeout=1) as ser:
+    parser = argparse.ArgumentParser(description="Read and display an ECG signal coming from a board")
+    parser.add_argument("-p", "--port", 
+                        type=valid_port,
+                        required=True,
+                        help="Port to the board (/dev/ttyX on linux or COMX on windows)")
+    parser.add_argument(
+        "-b",
+        "--baudrate",
+        type=valid_baudrate,
+        required=True,
+        help="Baudrate for serial communication. Must be a positive integer, e.g., 9600 or 115200."
+    )
+   
+    args = parser.parse_args()
+
+    with Serial(args.port, args.baudrate, timeout=1) as ser:
         ser.reset_input_buffer()
         ser.reset_output_buffer()
       

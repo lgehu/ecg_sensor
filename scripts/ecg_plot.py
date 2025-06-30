@@ -14,6 +14,16 @@ def valid_port(port):
     else:
         raise argparse.ArgumentTypeError(f"Invalid port: {port}. Expected formats: COM3 or /dev/ttyUSB0")
 
+def valid_baudrate(value):
+    try:
+        baud = int(value)
+        if baud > 0:
+            return baud
+        else:
+            raise ValueError
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"Invalid baudrate: {value}. Must be a positive integer.")
+
 # Plot data coming from the ECG sensor
 # This script can works if the board is running the main program (main.adb)
 if __name__ == "__main__":
@@ -22,9 +32,16 @@ if __name__ == "__main__":
                         type=valid_port,
                         required=True,
                         help="Port to the board (/dev/ttyX on linux or COMX on windows)")
+    parser.add_argument(
+        "-b",
+        "--baudrate",
+        type=valid_baudrate,
+        required=True,
+        help="Baudrate for serial communication. Must be a positive integer, e.g., 9600 or 115200."
+    )
     args = parser.parse_args()
     
-    with Serial(args.port, baudrate=921600, timeout=1) as ser:
+    with Serial(args.port, args.baudrate, timeout=1) as ser:
         
         OUTPUT_FORMAT = "FLOAT32"
         SAMPLE_RATE = 1000
