@@ -15,7 +15,8 @@ with STM32.GPIO;    use STM32.GPIO;
 with Peripherals;   use Peripherals;
 with UART_USB;      use UART_USB;
 with PanTompkins;
-with ADC_Controller;
+
+with Virtual_ADC;   
 
 
 package body Ecg_Sensor is
@@ -28,6 +29,9 @@ package body Ecg_Sensor is
 
    -- TODO: Add Interruptions for sampling, add a queue and compute value in the main loop
    -- TODO: Add error check in UART interrupt
+
+
+   -- TODO: Corriger bug Virtual sensor compatible avec la commande NEXT
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
@@ -46,7 +50,7 @@ package body Ecg_Sensor is
 
    Last_Btn_State : Boolean;
 
-   procedure Log (This : in out Controller; Msg : String) renames UART_USB.Transmit_String;
+   procedure Log (This : in out UART_USB.Controller; Msg : String) renames UART_USB.Transmit_String;
 
    procedure Send_Command (Msg : String) is
    begin
@@ -125,51 +129,25 @@ package body Ecg_Sensor is
       end loop;
    end Transmit_Float_32;
 
-   function Next_Value return IEEE_Float_32 is
-   Input : IEEE_Float_32;
-   begin
-      case Input_Channel.Get_Value is
-         when CH_FLASH =>
-            Input := AdaData.Data (Sample_Index);
-            Sample_Index := (Sample_Index mod AdaData.Data_Size) + 1; 
-         when CH_BTN =>
-            if not Set (Peripherals.User_Btn) and Last_Btn_State then
-               Input := 100.0;
-            else
-               Input := 0.0;
-            end if;
-            Last_Btn_State := Set (Peripherals.User_Btn);
-         when CH_ADC =>
-               Input := IEEE_Float_32 (ADC_Controller.Read_Value_Blocking);
-      end case;
-      return PanTompkins.Process_Sample (Input * Input_Gain.Get_Value);
-   end Next_Value;
-
-   procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
-   Time_Stamp : UInt32 := UInt32 (To_Duration ((Clock - Epoch) * 1_000)); -- Time Stamp in millisecond
-   Result : IEEE_Float_32 := Next_Value;
+   procedure Send_Sample (Input: Sample; Format : Output_Format_Type) is
+   Time_Stamp : UInt32 := UInt32 (To_Duration ((Input.Timestamp) * 1_000)); -- Time Stamp in millisecond
    Status : UART_Status;
    
    procedure Write_UInt_32 is new UART_USB.Write (T => UInt32);
    procedure Write_Float_32 is new UART_USB.Write (T => IEEE_Float_32);
 
    begin
-
-      if Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected then
-         return;
-      end if;
-
-      case Output_Format.Get_Value is
+      case Format is
          when OUT_ASCII =>
-            Send_Command (Time_Stamp'Image & ";" & Result'Image & ";" & PanTompkins.Is_Peak_Detected'Image);
+            Send_Command (Time_Stamp'Image & ";" & Input.Value'Image & ";" & PanTompkins.Is_Peak_Detected'Image);
          when FLOAT32 =>
             Write_UInt_32 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
-            Write_Float_32 (USBCOM, Result, BIG_ENDIAN, Status);
+            Write_Float_32 (USBCOM, Input.Value, BIG_ENDIAN, Status);
             USBCOM.Put_Blocking ((if PanTompkins.Is_Peak_Detected then 1 else 0), Status, Time_Span_Last);
          when others =>
             null;
       end case;
-   end Send_Next_Value;
+   end Send_Sample;
 
    procedure Read_Command is
    Arg : Commands_Interpreter.Argument;
@@ -206,7 +184,9 @@ package body Ecg_Sensor is
             Intended_State := RUNNING;
             if Current_State = IDLE then
                Current_State := RUNNING;
-               Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True);             
+               Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True);
+               Virtual_Adc.Set_Sample_Rate (Sample_Rate.Get_Value);
+               Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);          
             elsif Current_State = PAUSED then
                Current_State := RUNNING;
             end if;
@@ -217,11 +197,14 @@ package body Ecg_Sensor is
                   Current_State = PAUSED or 
                   Current_State = IDLE then
                Current_State := IDLE;
+               Virtual_ADC.Stop_Sampling;
             end if;
+
          elsif Cmd_Key = "PAUSE" then
             Intended_State := PAUSED; 
             if Current_State = RUNNING then
                Current_State := PAUSED;
+               Virtual_ADC.Stop_Sampling;
             end if;
          else
             Send_Command ("Invalid action");
@@ -245,11 +228,21 @@ package body Ecg_Sensor is
    Status : UART_Status;
    Sample_Period : Time_Span := To_Time_Span(1.0 / Sample_Rate.Get_Value);
    Elapsed_Time : Time_Span := Clock - Process_Start_Time;
+   Next_Sample : Sample;
    begin
+
+      -- Return if Peak is not detected i Trigger mode or there is no sample in the buffer
+      if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) or
+         not Virtual_ADC.Has_Sample then
+         return;
+      end if;
+
       if Elapsed_Time > Sample_Period then
          Process_Start_Time := Clock;
 
-         Send_Next_Value ((others => Cmd_Str.Null_Bounded_String), True);
+         Next_Sample := Virtual_ADC.Pop_Sample;
+         Result := PanTompkins.Process_Sample (Next_Sample.Value);
+         Send_Sample ((Result, Next_Sample.Timestamp, Next_Sample.Channel_Source), Output_Format.Get_Value);
 
          if PanTompkins.Is_Peak_Detected then
             LED_Ctrl.Start_Blinking;
@@ -259,40 +252,12 @@ package body Ecg_Sensor is
    end Process_Sample;
 
    procedure Initialize is
-   --Prescaler : constant UInt16 := UInt16 (((System_Clock_Frequencies.SYSCLK / 2) / 6000) - 1);
-   --Channel_1_Period : constant := 6000 - 1;                          -- 1 sec
+   Prescaler : constant UInt16 := UInt16 (((System_Clock_Frequencies.SYSCLK / 2) / 6000) - 1);
+   Channel_1_Period : constant := 6000 - 1;                          -- 1 sec
    begin
       USBCOM.Enable_Interrupt;
 
-      --  -- Virtual ADC
-      --  Enable_Clock (Timer_2);
-
-      --  Configure
-      --     (Timer_2,
-      --        Prescaler     => Prescaler,
-      --        Period        => UInt32 (UInt16'Last),  -- all the way up
-      --        Clock_Divisor => Div1,
-      --        Counter_Mode  => Up);
-
-      --  Configure_Prescaler
-      --     (Timer_2,
-      --     Prescaler   => Prescaler,
-      --     Reload_Mode => Immediate);
-
-      --  Enable_Interrupt
-      --     (Timer_2, STM32.Timers.Timer_CC1_Interrupt);
-
-      --   Configure_Channel_Output
-      --    (Timer_2,
-      --     Channel  => Channel_1,
-      --     Mode     => Frozen,
-      --     State    => Enable,
-      --     Pulse    => Channel_1_Period,
-      --     Polarity => High);
-
-      --  Set_Output_Preload_Enable (Timer_2, Channel_1, False);
-
-      --  Enable (Timer_2);
+      Virtual_ADC.Initialize;
 
       -- Controllers
       LED_Ctrl.Initialize;
@@ -300,8 +265,6 @@ package body Ecg_Sensor is
 
       Enable_Clock (Peripherals.User_Btn);
       Configure_IO (Peripherals.User_Btn, (Mode_In, Resistors => Pull_Down));
-
-      ADC_Controller.Initialize;
 
       -- Parameters
       Amplitude_Coef.Register;
@@ -327,17 +290,6 @@ package body Ecg_Sensor is
       Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True); 
    end Initialize;
 
-   --  protected body Virtual_ADC is
-   --     procedure IRQ_Handler is
-   --     begin
-   --        if Status (Timer_2, Timer_Update_Indicated) then
-   --           if Interrupt_Enabled (Timer_2, Timer_Update_Interrupt) then
-   --              Clear_Pending_Interrupt (Timer_2, Timer_Update_Interrupt);
-   --           end if;
-   --        end if;
-   --     end IRQ_Handler;      
-   --  end Virtual_ADC;
-
    procedure Update_Blocking is
    begin
       begin
@@ -346,14 +298,12 @@ package body Ecg_Sensor is
 
             case Current_State is
                when RUNNING =>
-                  Process_Sample;
+                     Process_Sample;
                when others =>
-                  
                   if Next_Cmd.Get_Value > 0 then
                      Process_Sample;
                      Next_Cmd.Accessor.Set_Value (Next_Cmd.Get_Value - 1);
                   end if;
-
             end case;
          end loop;
       exception -- Unknows Errors (if UART is working..), restart the board

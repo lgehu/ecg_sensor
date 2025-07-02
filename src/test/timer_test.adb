@@ -1,35 +1,44 @@
+with HAL;           use HAL;
+with HAL.UART;      use HAL.UART;
+with STM32.Board;   use STM32.Board;
+with STM32.Device;  use STM32.Device;
+with STM32.GPIO;    use STM32.GPIO;
+with STM32.Timers;  use STM32.Timers;
+with Ada.Interrupts;       use Ada.Interrupts;
+with Ada.Interrupts.Names; use Ada.Interrupts.Names;
+
 procedure Timer_Test is
 Prescaler : constant UInt16 := UInt16 (((System_Clock_Frequencies.SYSCLK / 2) / 6000) - 1);
-Channel_1_Period : constant := 6000 - 1;                          -- 1 sec
+Period : constant := 6000 - 1;  
+
+procedure Timer6_IRQ_Handler with
+   Attach_Handler => STM32.Interrupts.Names.TIM6_DAC_Interrupt;
+
+procedure Timer6_IRQ_Handler is
 begin
-      -- Virtual ADC
-      Enable_Clock (Timer_2);
+   if Status (Timer_6, Timer_Update_Indicated) then
+      if Interrupt_Enabled (Timer_6, Timer_Update_Interrupt) then
+         -- Ici, ton code à chaque interruption (ex: toggle LED)
+         Clear_Pending_Interrupt (Timer_6, Timer_Update_Interrupt);
+      end if;
+   end if;
+end Timer6_IRQ_Handler;
 
-      Configure
-         (Timer_2,
-            Prescaler     => Prescaler,
-            Period        => UInt32 (UInt16'Last),  -- all the way up
-            Clock_Divisor => Div1,
-            Counter_Mode  => Up);
+begin
+   Enable_Clock (Timer_6);
 
-      Configure_Prescaler
-         (Timer_2,
-         Prescaler   => Prescaler,
-         Reload_Mode => Immediate);
+   Configure
+     (Timer_6,
+      Prescaler     => Prescaler,
+      Period        => UInt32 (Period),
+      Clock_Divisor => Div1,
+      Counter_Mode  => Up);
 
-      Enable_Interrupt
-         (Timer_2, STM32.Timers.Timer_CC1_Interrupt);
+   Enable_Interrupt (Timer_6, Timer_Update_Interrupt);
 
-       Configure_Channel_Output
-        (Timer_2,
-         Channel  => Channel_1,
-         Mode     => Frozen,
-         State    => Enable,
-         Pulse    => Channel_1_Period,
-         Polarity => High);
+   Enable (Timer_6);
 
-      Set_Output_Preload_Enable (Timer_2, Channel_1, False);
+   -- Le timer tourne et exécute Timer6_IRQ_Handler toutes les secondes
 
-      Enable (Timer_2);
 
 end Timer_Test;

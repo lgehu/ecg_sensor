@@ -5,33 +5,20 @@ with AdaData;
 
 with Ada.Interrupts.Names; use Ada.Interrupts.Names;
 
---  with STM32;                use STM32;
---  with STM32.Device;         use STM32.Device;
---  with STM32.Timers;         use STM32.Timers;
---  with HAL;                  use HAL;
+with STM32;                use STM32;
+with STM32.Device;         use STM32.Device;
+with STM32.Timers;         use STM32.Timers;
+with HAL;                  use HAL;
 
+with Virtual_ADC;          use Virtual_ADC;
 
 package Ecg_Sensor is
 
    subtype Sample_Rate_Type is Positive range 10 .. 1000;  
-   type Input_Channel_Type is (CH_BTN, CH_FLASH, CH_ADC);
 
    procedure Initialize;
 
-   -- Process next value from selected channel
-   function Next_Value return IEEE_Float_32;
-
    procedure Update_Blocking;
-
-   -- Virtual ADC
-   --  protected Virtual_ADC is
-   --     pragma Interrupt_Priority;
-   --  private
-
-   --     procedure IRQ_Handler;
-   --     pragma Attach_Handler (IRQ_Handler, TIM2_Interrupt);
-
-   --  end Virtual_ADC;
 
    private
       type Output_Format_Type is (OUT_ASCII, FLOAT32);
@@ -43,8 +30,6 @@ package Ecg_Sensor is
       procedure Print_Args (User_Input : Commands_Interpreter.Argument; Valid : Boolean);
 
       procedure Reset_Sensor (User_Input : Commands_Interpreter.Argument; Valid : Boolean);
-
-      procedure Send_Next_Value (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
       procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
@@ -90,9 +75,9 @@ package Ecg_Sensor is
                   Action_Fn      => Return_Arg'Access
                );
 
-      package Input_Channel is new Commands_Interpreter.Discrete_Accessor (T => Input_Channel_Type,
+      package Input_Channel is new Commands_Interpreter.Discrete_Accessor (T => Virtual_ADC.Input_Channel_Type,
                   Key           => "INPUT_CHANNEL",
-                  Default_Value => CH_FLASH,
+                  Default_Value => Virtual_ADC.CH_FLASH,
                   Action_Fn     => Return_Arg'Access
                );
       
@@ -127,7 +112,7 @@ package Ecg_Sensor is
       package Next_Cmd is new Commands_Interpreter.Discrete_Accessor ( T => Natural,
                   Key            => "NEXT",
                   Default_Value  => 0,
-                  Action_Fn      => Send_Next_Value'Access
+                  Action_Fn      => null
                );
 
       package Version_Cmd is new Commands_Interpreter.Action_Accessor (

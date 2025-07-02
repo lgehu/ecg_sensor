@@ -12,6 +12,10 @@ with UART_USB;             use UART_USB;
 
 package Peripherals is
 
+   -- Virtual ADC
+   ADC_Timer         : Timer renames Timer_6;
+   ADC_Timer_Interrupt renames TIM6_DAC_Interrupt;
+   ADC_Converter_Interrupt renames ADC_Interrupt;
 
    -- ADC
    ADC_Converter     : Analog_To_Digital_Converter renames ADC_1;
