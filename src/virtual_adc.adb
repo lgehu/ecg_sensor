@@ -4,6 +4,7 @@ with STM32.Timers;  use STM32.Timers;
 with STM32.Device;  use STM32.Device;
 with STM32.ADC;     use STM32.ADC;
 with STM32.Board;   use STM32.Board;
+with STM32.GPIO;    use STM32.GPIO;
 
 package body Virtual_ADC is
 
@@ -15,10 +16,12 @@ package body Virtual_ADC is
    Flash_Index   : Natural := 1;
 
    All_Regular_Conversions : constant Regular_Channel_Conversions :=
-   (1 => (Channel => VBat.Channel, Sample_Time => Sample_15_Cycles));
+   (1 => (Channel => 0, Sample_Time => Sample_15_Cycles));
 
    Epoch : Time := Clock; -- time reference for timestamp 
    Channel_Source : Input_Channel_Type := CH_ADC;   
+
+   Sampling : Boolean := false;
 
    procedure Initialize_Timer is
    begin
@@ -38,7 +41,7 @@ package body Virtual_ADC is
    procedure Initialize_ADC is
    begin
       Enable_Clock (ADC_Input);
-      --Configure_IO (ADC_Input, (Mode => Mode_Analog, Resistors => Floating));
+      Configure_IO (ADC_Input, (Mode => Mode_Analog, Resistors => Floating));
 
       Enable_Clock(ADC_Converter);
 
@@ -62,6 +65,7 @@ package body Virtual_ADC is
 
       Enable_Interrupts (ADC_Converter, Regular_Channel_Conversion_Complete);
 
+      Sampling := False;
    end Initialize_ADC;
 
    procedure Initialize is
@@ -87,11 +91,14 @@ package body Virtual_ADC is
       case Channel_Source is
          when CH_FLASH => 
             Enable (ADC_Timer);
+            Sampling := True;
          when CH_ADC =>
             Enable (ADC_Timer);
             Enable (ADC_Converter);
+            Sampling := True;
          when others => null;
       end case;
+      Channel_Source := Channel;
       Epoch := Clock;
    end Start_Sampling;
 
@@ -105,7 +112,13 @@ package body Virtual_ADC is
             Disable (ADC_Converter);
          when others => null;
       end case;
+      Sampling := False;
    end Stop_Sampling;
+
+   function Is_Sampling return Boolean is 
+   begin
+      return Sampling;
+   end Is_Sampling;
 
    procedure Add_Sample (Input: Sample) is
    begin

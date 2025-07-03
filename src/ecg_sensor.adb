@@ -185,7 +185,7 @@ package body Ecg_Sensor is
             if Current_State = IDLE then
                Current_State := RUNNING;
                Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True);
-               Virtual_Adc.Set_Sample_Rate (Sample_Rate.Get_Value);
+               Virtual_ADC.Set_Sample_Rate (Sample_Rate.Get_Value);
                Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);          
             elsif Current_State = PAUSED then
                Current_State := RUNNING;

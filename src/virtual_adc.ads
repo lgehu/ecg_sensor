@@ -28,7 +28,7 @@ package Virtual_ADC is
 
    function Has_Sample return Boolean;
 
-  -- procedure Is_Sampling;
+   function Is_Sampling return Boolean;
 
    protected Controller is
       pragma Interrupt_Priority;
