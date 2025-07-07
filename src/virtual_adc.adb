@@ -107,6 +107,7 @@ package body Virtual_ADC is
       Sampling := True;
       Sample_Index := 1;
       Channel_Source := Channel;
+      Flash_Index := 1;
       Epoch := Clock;
    end Start_Sampling;
 

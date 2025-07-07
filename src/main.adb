@@ -14,6 +14,8 @@ begin
       Ecg_Sensor.Update_Blocking;
    exception
       when E : Constraint_Error =>
-         Transmit_String (USBCOM, Exception_Message (E));
+         Ecg_Sensor.Send_Command (Exception_Message (E));
+      when E : Program_Error    => 
+         Ecg_Sensor.Send_Command (Exception_Message (E));
    end;
 end Main;

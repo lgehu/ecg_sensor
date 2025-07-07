@@ -29,7 +29,6 @@ package body Ecg_Sensor is
 
    -- TODO: Add error check in UART interrupt
 
-   -- TODO: Corriger bug Virtual sensor compatible avec la commande NEXT
 
    type Sampling_Mode is (Mode_Loop, Mode_Onetime);
    type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
@@ -64,14 +63,6 @@ package body Ecg_Sensor is
          Send_Command ("Invalid parameter");
       end if;
    end;
-
-   procedure Next_Callback (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
-   begin
-      if not Virtual_ADC.Is_Sampling then
-         Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);
-      end if;
-   end Next_Callback;
-
 
    procedure Reset_Sensor (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#), Volatile;
@@ -236,13 +227,23 @@ package body Ecg_Sensor is
       Next_Sample := Virtual_ADC.Pop_Sample;
       Result := PanTompkins.Process_Sample (Next_Sample.Value);
 
+      if Next_Cmd.Accessor.Get_Value > 0 then
+         Next_Cmd.Accessor.Set_Value (Next_Cmd.Accessor.Get_Value - 1);
+         if Next_Cmd.Accessor.Get_Value = 0 then
+            Virtual_ADC.Stop_Sampling;
+            Current_State := IDLE;
+         end if;
+      end if;
+
       if PanTompkins.Is_Peak_Detected then
          LED_Ctrl.Start_Blinking;
       end if;
 
+      -- Send sample if there is a peak and trigger is enabled 
       if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) then
          return;
       end if;
+
       Send_Sample ((Value => Result, 
                   Timestamp => Next_Sample.Timestamp,
                   Channel_Source => Next_Sample.Channel_Source), Output_Format.Get_Value);
@@ -250,8 +251,6 @@ package body Ecg_Sensor is
    end Process_Sample;
 
    procedure Initialize is
-   Prescaler : constant UInt16 := UInt16 (((System_Clock_Frequencies.SYSCLK / 2) / 6000) - 1);
-   Channel_1_Period : constant := 6000 - 1;                          -- 1 sec
    begin
       USBCOM.Enable_Interrupt;
 
@@ -287,28 +286,10 @@ package body Ecg_Sensor is
 
    procedure Update_Blocking is
    begin
-      begin
-         loop
-            Read_Command; -- Not Blocking
-
-            case Current_State is
-               when RUNNING =>
-                     Process_Sample;
-               when others =>
-                  if Next_Cmd.Get_Value > 0 then
-                     Process_Sample;
-                     if Next_Cmd.Accessor.Get_Value = 0 then
-                        Virtual_ADC.Stop_Sampling;
-                     end if;
-                  end if;
-            end case;
-         end loop;
-      exception -- Unknows Errors (if UART is working..), restart the board
-         when E : Constraint_Error =>
-            Send_Command (Exception_Message (E));
-         when E : Program_Error => 
-            Send_Command (Exception_Message (E));
-      end;
+      loop
+         Read_Command; -- Not Blocking
+         Process_Sample;
+      end loop;
    end Update_Blocking;
 
 end Ecg_Sensor;

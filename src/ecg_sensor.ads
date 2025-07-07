@@ -20,6 +20,8 @@ package Ecg_Sensor is
 
    procedure Update_Blocking;
 
+   procedure Send_Command (Msg : String);
+
    private
       type Output_Format_Type is (OUT_ASCII, FLOAT32);
 
@@ -34,8 +36,6 @@ package Ecg_Sensor is
       procedure Send_Version (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
       procedure Init_Sampling (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
-
-      procedure Next_Callback (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
       package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Sample_Rate_Type,
                   Key            => "SAMPLE_RATE",
@@ -114,7 +114,7 @@ package Ecg_Sensor is
       package Next_Cmd is new Commands_Interpreter.Discrete_Accessor ( T => Natural,
                   Key            => "NEXT",
                   Default_Value  => 0,
-                  Action_Fn      => null
+                  Action_Fn      => Return_Arg'Access
                );
 
       package Version_Cmd is new Commands_Interpreter.Action_Accessor (
