@@ -28,7 +28,7 @@ package Peripherals is
    Transceiver : USART renames USART_2;
    Transceiver_Interrupt_Id : constant Interrupt_ID := USART2_Interrupt;
    Transceiver_AF : constant STM32.GPIO_Alternate_Function := GPIO_AF_USART1_7;
-   UART_BAUDRATE : Baud_Rates := 921_600; 
+   UART_BAUDRATE : Baud_Rates := 896_000; 
 
    USBCOM : UART_USB.Controller (TX_Pin'Access, 
                               RX_Pin'Access, 

@@ -3,6 +3,7 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Ecg_Sensor;
 with Peripherals; use Peripherals;
 with UART_USB; use UART_USB;
+with Virtual_ADC;
 
 procedure Main is
 begin

@@ -42,7 +42,7 @@ package body LED_Controller is
       end Stop_Blinking;
 
       procedure Set_Frequency (Freq : Float) is
-      Clock_Freq : Float := Float (System_Clock_Frequencies.SYSCLK);
+      Clock_Freq : Float := Float (System_Clock_Frequencies.SYSCLK) / 2.0;
       Divisor : constant Float := 180_000.0 * Float (Freq);
       PSC : UInt16 := 0; 
       begin

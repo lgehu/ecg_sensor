@@ -35,6 +35,8 @@ package Ecg_Sensor is
 
       procedure Init_Sampling (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
 
+      procedure Next_Callback (User_Input : Commands_Interpreter.Argument ; Valid : Boolean);
+
       package Sample_Rate is new Commands_Interpreter.Discrete_Accessor (T => Sample_Rate_Type,
                   Key            => "SAMPLE_RATE",
                   Default_Value  => AdaData.Sample_Rate,

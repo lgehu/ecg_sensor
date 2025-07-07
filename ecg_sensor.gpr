@@ -29,7 +29,8 @@ project ECG_Sensor is
       for Default_Switches ("Ada") use (
          "-O2",
          "-gnat2022",
-         "-T", "linker/linker_script.ld"
+         "-T", "linker/linker_script.ld",
+         "-gnata"
       );
 
       -- for Linker_Switches use ("-T", "linker/linker_script.ld");

@@ -27,9 +27,7 @@ package body Ecg_Sensor is
    -- TODO: Add input and output channel (ADC, SPI ...)
    -- TODO: Add the dataset name at the beginning of the data signal ?
 
-   -- TODO: Add Interruptions for sampling, add a queue and compute value in the main loop
    -- TODO: Add error check in UART interrupt
-
 
    -- TODO: Corriger bug Virtual sensor compatible avec la commande NEXT
 
@@ -42,13 +40,8 @@ package body Ecg_Sensor is
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
    CMD_END : constant Character := ASCII.Semicolon;
-   Epoch : Time := Clock;              -- Start time for sending timestamp       
 
-   Sample_Index : Positive := 1;                -- Current index in the sample data 
    Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
-   Process_Start_Time : Time := Clock;          -- Precedent sample sent time
-
-   Last_Btn_State : Boolean;
 
    procedure Log (This : in out UART_USB.Controller; Msg : String) renames UART_USB.Transmit_String;
 
@@ -71,6 +64,14 @@ package body Ecg_Sensor is
          Send_Command ("Invalid parameter");
       end if;
    end;
+
+   procedure Next_Callback (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
+   begin
+      if not Virtual_ADC.Is_Sampling then
+         Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);
+      end if;
+   end Next_Callback;
+
 
    procedure Reset_Sensor (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#), Volatile;
@@ -165,13 +166,11 @@ package body Ecg_Sensor is
 
    procedure Init_Sampling (User_Input : Commands_Interpreter.Argument ; Valid : Boolean) is
    begin
-      Sample_Index := 1;
       PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Get_Value), 
                               Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
                               Minimal_Peak_Distance_Sec => Peak_Distance.Get_Value, 
                               Window_Sec => Window_Sec.Get_Value, 
                               Output_Stage => Output_Stage.Get_Value));
-      Epoch := Clock;
    end Init_Sampling;
 
    procedure Change_State (Input : Commands_Interpreter.Argument; Valid : Boolean) is
@@ -222,33 +221,32 @@ package body Ecg_Sensor is
             Send_Command (Exception_Message (E));
       end;
    end Change_State;
-
+ 
    procedure Process_Sample is 
    Result : IEEE_Float_32 := 0.0;
    Status : UART_Status;
    Sample_Period : Time_Span := To_Time_Span(1.0 / Sample_Rate.Get_Value);
-   Elapsed_Time : Time_Span := Clock - Process_Start_Time;
    Next_Sample : Sample;
    begin
 
-      -- Return if Peak is not detected i Trigger mode or there is no sample in the buffer
-      if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) or
-         not Virtual_ADC.Has_Sample then
+      if not Virtual_ADC.Has_Sample then
+          return;
+      end if;
+
+      Next_Sample := Virtual_ADC.Pop_Sample;
+      Result := PanTompkins.Process_Sample (Next_Sample.Value);
+
+      if PanTompkins.Is_Peak_Detected then
+         LED_Ctrl.Start_Blinking;
+      end if;
+
+      if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) then
          return;
       end if;
+      Send_Sample ((Value => Result, 
+                  Timestamp => Next_Sample.Timestamp,
+                  Channel_Source => Next_Sample.Channel_Source), Output_Format.Get_Value);
 
-      if Elapsed_Time > Sample_Period then
-         Process_Start_Time := Clock;
-
-         Next_Sample := Virtual_ADC.Pop_Sample;
-         Result := PanTompkins.Process_Sample (Next_Sample.Value);
-         Send_Sample ((Result, Next_Sample.Timestamp, Next_Sample.Channel_Source), Output_Format.Get_Value);
-
-         if PanTompkins.Is_Peak_Detected then
-            LED_Ctrl.Start_Blinking;
-         end if;         
-
-      end if;
    end Process_Sample;
 
    procedure Initialize is
@@ -262,9 +260,6 @@ package body Ecg_Sensor is
       -- Controllers
       LED_Ctrl.Initialize;
       LED_Ctrl.Set_Frequency (15.0);
-
-      Enable_Clock (Peripherals.User_Btn);
-      Configure_IO (Peripherals.User_Btn, (Mode_In, Resistors => Pull_Down));
 
       -- Parameters
       Amplitude_Coef.Register;
@@ -302,7 +297,9 @@ package body Ecg_Sensor is
                when others =>
                   if Next_Cmd.Get_Value > 0 then
                      Process_Sample;
-                     Next_Cmd.Accessor.Set_Value (Next_Cmd.Get_Value - 1);
+                     if Next_Cmd.Accessor.Get_Value = 0 then
+                        Virtual_ADC.Stop_Sampling;
+                     end if;
                   end if;
             end case;
          end loop;

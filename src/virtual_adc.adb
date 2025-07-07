@@ -12,6 +12,7 @@ package body Virtual_ADC is
 
    Sample_Buffer : Sample_Buffer_Type (1 .. 100);
    Sample_Index  : Natural := 1;
+   pragma Atomic (Sample_Index);
 
    Flash_Index   : Natural := 1;
 
@@ -37,6 +38,12 @@ package body Virtual_ADC is
 
       Enable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
    end Initialize_Timer;
+
+   procedure Initialize_Btn is
+   begin
+      Enable_Clock (Peripherals.User_Btn);
+      Configure_IO (Peripherals.User_Btn, (Mode_In, Resistors => Pull_Down));
+   end Initialize_Btn;
 
    procedure Initialize_ADC is
    begin
@@ -72,18 +79,18 @@ package body Virtual_ADC is
    begin
       Initialize_Timer;
       Initialize_ADC;
+      Initialize_Btn;
+
       Set_Sample_Rate (100);
    end Initialize;
 
    procedure Set_Sample_Rate (Sample_Rate : Positive) is
-   Clock_Freq : Float := Float (System_Clock_Frequencies.SYSCLK);
-   Divisor : constant Float := 180_000.0 * Float (Sample_Rate);
-   PSC : UInt16 := 0; 
+   Clock_Freq : constant Float := Float (System_Clock_Frequencies.SYSCLK) / 2.0;
+   ARR     : constant := 10_000.0;
+   PSC     : Float := Clock_Freq / ((ARR + 1.0) * Float (Sample_Rate) - 1.0); 
    begin
-      if Divisor > 0.0 then
-         PSC := UInt16 (Clock_Freq / Divisor);
-         Configure_Prescaler (ADC_Timer, PSC, Update);
-      end if;
+      Configure_Prescaler (ADC_Timer, UInt16 (Float'Rounding (PSC)), Update);
+      Set_Autoreload (ADC_Timer, UInt32 (ARR));
    end Set_Sample_Rate;
 
    procedure Start_Sampling (Channel : Input_Channel_Type) is
@@ -91,13 +98,14 @@ package body Virtual_ADC is
       case Channel_Source is
          when CH_FLASH => 
             Enable (ADC_Timer);
-            Sampling := True;
          when CH_ADC =>
             Enable (ADC_Timer);
             Enable (ADC_Converter);
-            Sampling := True;
-         when others => null;
+         when CH_BTN =>
+            Enable (ADC_Timer);
       end case;
+      Sampling := True;
+      Sample_Index := 1;
       Channel_Source := Channel;
       Epoch := Clock;
    end Start_Sampling;
@@ -120,26 +128,32 @@ package body Virtual_ADC is
       return Sampling;
    end Is_Sampling;
 
-   procedure Add_Sample (Input: Sample) is
+   procedure Add_Sample (Value : IEEE_Float_32) is
    begin
+      Sample_Buffer (Sample_Index) := (Value => Value, 
+                                       Timestamp =>  Clock - Epoch, 
+                                       Channel_Source => Channel_Source);
       Sample_Index := (Sample_Index mod Sample_Buffer'Length) + 1;
-      Sample_Buffer (Sample_Index) := Input;
    end Add_Sample;
 
    function Pop_Sample return Sample is
-   S : Sample := Sample_Buffer (Sample_Index);
+   S : Sample;
    begin
+      Disable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
       if Has_Sample then
+         S := Sample_Buffer (Sample_Index - 1);
          Sample_Index := Sample_Index - 1;
-         return S;
       else
-         return (0.0, Time_Span_First, Channel_Source);
+         S := (0.0, Clock - Epoch, Channel_Source);
       end if;
+      Enable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
+      return S; 
    end Pop_Sample;
 
    function Has_Sample return Boolean is
+   Index : Natural := 0;
    begin
-      return Sample_Index > 0;
+      return Sample_Index > 1;
    end Has_Sample;
 
    protected body Controller is
@@ -148,17 +162,23 @@ package body Virtual_ADC is
       begin
          if Status (ADC_Timer, Timer_Update_Indicated) then
             if Interrupt_Enabled (ADC_Timer, Timer_Update_Interrupt) then
+               Clear_Pending_Interrupt (ADC_Timer, Timer_Update_Interrupt);
                
                case Channel_Source is
                   when CH_FLASH => 
-                     Add_Sample ((AdaData.Data (Flash_Index), Clock - Epoch, CH_FLASH));
+                     Add_Sample (AdaData.Data (Flash_Index));
                      Flash_Index := (Flash_Index mod AdaData.Data_Size) + 1;
+                  when CH_BTN   =>
+                     if User_Btn.Set then
+                        Add_Sample (0.0);
+                     else
+                        Add_Sample (1000.0);
+                     end if;
                   when CH_ADC   =>
                      Start_Conversion (ADC_Converter);
                   when others => null;
                end case;
                
-               Clear_Pending_Interrupt (ADC_Timer, Timer_Update_Interrupt);
             end if;
          end if;
       end Timer_IRQ;
@@ -170,7 +190,7 @@ package body Virtual_ADC is
             if Interrupt_Enabled (ADC_Converter, Regular_Channel_Conversion_Complete) then
                Clear_Interrupt_Pending (ADC_Converter, Regular_Channel_Conversion_Complete);
                Value := Conversion_Value (ADC_Converter);
-               Add_Sample ((IEEE_Float_32 (Value), Clock - Epoch, CH_ADC));
+               Add_Sample (IEEE_Float_32 (Value));
             end if;
          end if;
       end ADC_IRQ;
