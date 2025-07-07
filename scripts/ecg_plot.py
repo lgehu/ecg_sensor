@@ -41,11 +41,11 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     
-    with Serial(args.port, args.baudrate, timeout=1) as ser:
+    with Serial(args.port, args.baudrate, timeout=1, write_timeout=1) as ser:
         
         OUTPUT_FORMAT = "FLOAT32"
-        SAMPLE_RATE = 500
-        SAMPLING_TIME = 5   # Seconds
+        SAMPLE_RATE = 1000
+        SAMPLING_TIME = 10   # Seconds
         MAX_SAMPLE = int(SAMPLE_RATE * SAMPLING_TIME)
 
         values     = [0] * MAX_SAMPLE
@@ -58,8 +58,8 @@ if __name__ == "__main__":
         ecg_com.send_command(ser, "STOP")
         ecg_com.send_command(ser, f"OUTPUT_FORMAT={OUTPUT_FORMAT}", True)
         ecg_com.send_command(ser, f"SAMPLE_RATE={SAMPLE_RATE}",     True)
-        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_RAW",         True)
-        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",           True)
+        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_INTEGRATED",  True)
+        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_FLASH",         True)
         ecg_com.send_command(ser, "AMPLITUDE_COEF=1.5",             True)
         ecg_com.send_command(ser, "INPUT_GAIN=1.0",                 True)
         ecg_com.send_command(ser, "PEAK_DISTANCE=0.260",            True)

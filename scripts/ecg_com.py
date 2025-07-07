@@ -1,5 +1,5 @@
 # import the WFDB package
-from serial import Serial
+from serial import Serial, SerialException
 import numpy as np
 import struct
 import matplotlib.pyplot as plt
@@ -9,6 +9,7 @@ import threading
 import time
 import re
 import argparse
+import time
 
 def read_uint_32(ser : Serial) -> int:
     return int(struct.unpack('>i', ser.read(4))[0])
@@ -29,8 +30,10 @@ def read_float_32(ser : Serial) -> float:
     #         data.extend(b)
     return float(struct.unpack ('>f', ser.read(4))[0])
 
-def send_command(ser : Serial, cmd : str, wait_ok : bool = False):
-    #print(">" + cmd)
+def send_command(ser : Serial, cmd : str, wait_ok : bool = False, attempt=3):
+    if attempt <= 0:
+        return
+
     ser.read_all()
     ser.reset_input_buffer()
     ser.reset_output_buffer()
@@ -38,15 +41,22 @@ def send_command(ser : Serial, cmd : str, wait_ok : bool = False):
     ser.flush()
 
     if wait_ok:
-        wait_response(ser, "OK")
+        if wait_response(ser, "OK") != "OK":
+            send_command(ser, cmd, wait_ok, attempt - 1)
 
 def wait_response(ser : Serial, msg : str | None = None):
     response = ""
+    start = time.time()
     while response != msg:
-        ser.read_until("<".encode())[:-1]
-        data = ser.read_until(">".encode())[:-1]
-        response = data.decode(errors="ignore")
-        #print("<" + response)
+        if (time.time() - start) > 1:
+            break
+
+        try:
+            ser.read_until("<".encode())[:-1]
+            data = ser.read_until(">".encode())[:-1]
+            response = data.decode(errors="ignore")
+        except SerialException:
+            break
         
         if msg == None:
             break
@@ -97,7 +107,7 @@ if __name__ == "__main__":
    
     args = parser.parse_args()
 
-    with Serial(args.port, args.baudrate, timeout=1) as ser:
+    with Serial(args.port, args.baudrate, timeout=1, write_timeout=1) as ser:
         ser.reset_input_buffer()
         ser.reset_output_buffer()
       

@@ -24,6 +24,8 @@ package body Virtual_ADC is
 
    Sampling : Boolean := false;
 
+   Last_Button_State : Boolean := False;
+
    procedure Initialize_Timer is
    begin
       -- Enable TIMER
@@ -140,16 +142,21 @@ package body Virtual_ADC is
    function Pop_Sample return Sample is
    S : Sample;
    begin
-      Disable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
       if Has_Sample then
+         Disable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
          S := Sample_Buffer (Sample_Index - 1);
          Sample_Index := Sample_Index - 1;
+         Enable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
       else
          S := (0.0, Clock - Epoch, Channel_Source);
       end if;
-      Enable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
       return S; 
    end Pop_Sample;
+
+   procedure Reset_Buffer is 
+   begin
+      Sample_Index := 1;
+   end Reset_Buffer;
 
    function Has_Sample return Boolean is
    Index : Natural := 0;
@@ -170,11 +177,12 @@ package body Virtual_ADC is
                      Add_Sample (AdaData.Data (Flash_Index));
                      Flash_Index := (Flash_Index mod AdaData.Data_Size) + 1;
                   when CH_BTN   =>
-                     if User_Btn.Set then
-                        Add_Sample (0.0);
-                     else
+                     if not User_Btn.Set and Last_Button_State then
                         Add_Sample (1000.0);
+                     else
+                        Add_Sample (0.0);
                      end if;
+                     Last_Button_State := User_Btn.Set;
                   when CH_ADC   =>
                      Start_Conversion (ADC_Converter);
                   when others => null;

@@ -71,6 +71,8 @@ package body Ecg_Sensor is
    begin
       if Virtual_ADC.Is_Sampling then
          Virtual_ADC.Stop_Sampling;
+         Virtual_ADC.Reset_Buffer;
+         -- Send_Command ("OK");
       end if;
    end Stop_Sampling;
 

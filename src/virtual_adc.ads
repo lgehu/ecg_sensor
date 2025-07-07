@@ -24,9 +24,12 @@ package Virtual_ADC is
 
    procedure Stop_Sampling;
 
+   procedure Reset_Buffer; 
+   
    function Pop_Sample return Sample;
 
    function Has_Sample return Boolean;
+
 
    function Is_Sampling return Boolean;
 
