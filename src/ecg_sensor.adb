@@ -29,18 +29,12 @@ package body Ecg_Sensor is
 
    -- TODO: Add error check in UART interrupt
 
-
-   type Sampling_Mode is (Mode_Loop, Mode_Onetime);
-   type Sensor_State_Type is (IDLE, RUNNING, PAUSED);
- 
    package UART_STR renames UART_USB.B_Str;
    package Cmd_Str renames Commands_Interpreter.Command_String;
 
    ECG_VERSION : constant String := "0.1";
    CR_LF : constant String := ASCII.CR & ASCII.LF;
    CMD_END : constant Character := ASCII.Semicolon;
-
-   Current_State : Sensor_State_Type := IDLE;   -- Current state of the sensor
 
    procedure Log (This : in out UART_USB.Controller; Msg : String) renames UART_USB.Transmit_String;
 
@@ -63,6 +57,22 @@ package body Ecg_Sensor is
          Send_Command ("Invalid parameter");
       end if;
    end;
+
+   procedure Start_Sampling (Input : Commands_Interpreter.Argument; Valid : Boolean) is
+   begin
+      if not Virtual_ADC.Is_Sampling then
+         Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True);
+         Virtual_ADC.Set_Sample_Rate (Sample_Rate.Get_Value);
+         Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);
+      end if;
+   end Start_Sampling;
+
+   procedure Stop_Sampling (Input : Commands_Interpreter.Argument; Valid : Boolean) is
+   begin
+      if Virtual_ADC.Is_Sampling then
+         Virtual_ADC.Stop_Sampling;
+      end if;
+   end Stop_Sampling;
 
    procedure Reset_Sensor (User_Input : Commands_Interpreter.Argument; Valid : Boolean) is
    SCB_AIRCR : Unsigned_32 with Address => System'To_Address (16#E000ED0C#), Volatile;
@@ -163,55 +173,6 @@ package body Ecg_Sensor is
                               Window_Sec => Window_Sec.Get_Value, 
                               Output_Stage => Output_Stage.Get_Value));
    end Init_Sampling;
-
-   procedure Change_State (Input : Commands_Interpreter.Argument; Valid : Boolean) is
-   Intended_State : Sensor_State_Type;
-   Old_State : Sensor_State_Type := Current_State;
-   Cmd_Key : String := Cmd_Str.To_String (Input.Key);
-   begin
-      begin
-         if Cmd_Key = "START" then
-            Intended_State := RUNNING;
-            if Current_State = IDLE then
-               Current_State := RUNNING;
-               Init_Sampling ((others => Cmd_Str.Null_Bounded_String), True);
-               Virtual_ADC.Set_Sample_Rate (Sample_Rate.Get_Value);
-               Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);          
-            elsif Current_State = PAUSED then
-               Current_State := RUNNING;
-            end if;
-         elsif Cmd_Key = "STOP" then
-
-            Intended_State := IDLE;
-            if Current_State = RUNNING or 
-                  Current_State = PAUSED or 
-                  Current_State = IDLE then
-               Current_State := IDLE;
-               Virtual_ADC.Stop_Sampling;
-            end if;
-
-         elsif Cmd_Key = "PAUSE" then
-            Intended_State := PAUSED; 
-            if Current_State = RUNNING then
-               Current_State := PAUSED;
-               Virtual_ADC.Stop_Sampling;
-            end if;
-         else
-            Send_Command ("Invalid action");
-         end if;
-
-         if Intended_State /= Current_State then
-            Send_Command ("Can't change state from " & 
-                  Current_State'Image & " to " & Intended_State'Image);
-         else
-            Send_Command ("OK");
-         end if;
-
-      exception
-         when E : Constraint_Error =>
-            Send_Command (Exception_Message (E));
-      end;
-   end Change_State;
  
    procedure Process_Sample is 
    Result : IEEE_Float_32 := 0.0;
@@ -231,7 +192,6 @@ package body Ecg_Sensor is
          Next_Cmd.Accessor.Set_Value (Next_Cmd.Accessor.Get_Value - 1);
          if Next_Cmd.Accessor.Get_Value = 0 then
             Virtual_ADC.Stop_Sampling;
-            Current_State := IDLE;
          end if;
       end if;
 
@@ -276,7 +236,6 @@ package body Ecg_Sensor is
       Reset_Cmd.Register;
       Stop_Cmd.Register;
       Start_Cmd.Register;
-      Pause_Cmd.Register;
       Next_Cmd.Register;      
       Version_Cmd.Register;
       Init_Cmd.Register;

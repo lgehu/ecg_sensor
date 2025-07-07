@@ -55,17 +55,17 @@ if __name__ == "__main__":
         ser.reset_input_buffer()
         ser.reset_output_buffer()
 
-        ecg_com.send_command(ser, "STOP",                           True)
+        ecg_com.send_command(ser, "STOP")
         ecg_com.send_command(ser, f"OUTPUT_FORMAT={OUTPUT_FORMAT}", True)
         ecg_com.send_command(ser, f"SAMPLE_RATE={SAMPLE_RATE}",     True)
         ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_RAW",         True)
-        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",          True)
+        ecg_com.send_command(ser, "INPUT_CHANNEL=CH_BTN",           True)
         ecg_com.send_command(ser, "AMPLITUDE_COEF=1.5",             True)
         ecg_com.send_command(ser, "INPUT_GAIN=1.0",                 True)
         ecg_com.send_command(ser, "PEAK_DISTANCE=0.260",            True)
         ecg_com.send_command(ser, "WINDOW_SEC=0.15",                True)
         #ecg_com.send_command(ser, "ENABLE_TRIGGER=TRUE",            True)
-        ecg_com.send_command(ser, "START",                          True)
+        ecg_com.send_command(ser, "START")
 
         timestamp, value, is_peak = 0, 0, False
         for i in range(MAX_SAMPLE):

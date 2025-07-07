@@ -25,7 +25,9 @@ package Ecg_Sensor is
    private
       type Output_Format_Type is (OUT_ASCII, FLOAT32);
 
-      procedure Change_State (Input : Commands_Interpreter.Argument; Valid : Boolean);
+      procedure Start_Sampling (Input : Commands_Interpreter.Argument; Valid : Boolean);
+
+      procedure Stop_Sampling (Input : Commands_Interpreter.Argument; Valid : Boolean);
 
       procedure Return_Arg (User_Input : Commands_Interpreter.Argument; Valid : Boolean);
 
@@ -96,15 +98,11 @@ package Ecg_Sensor is
       
       package Start_Cmd is new Commands_Interpreter.Action_Accessor (
                   Key            => "START", 
-                  Action_Fn      => Change_State'Access);
+                  Action_Fn      => Start_Sampling'Access);
 
       package Stop_Cmd is new Commands_Interpreter.Action_Accessor (
                   Key            => "STOP", 
-                  Action_Fn      => Change_State'Access);
-
-      package Pause_Cmd is new Commands_Interpreter.Action_Accessor (
-                  Key            => "PAUSE", 
-                  Action_Fn      => Change_State'Access);
+                  Action_Fn      => Stop_Sampling'Access);
 
       package Reset_Cmd is new Commands_Interpreter.Action_Accessor (
                   Key            => "RESET", 
