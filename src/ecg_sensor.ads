@@ -7,6 +7,7 @@ with Ada.Interrupts.Names; use Ada.Interrupts.Names;
 
 with STM32;                use STM32;
 with STM32.Device;         use STM32.Device;
+with STM32.GPIO;
 with STM32.Timers;         use STM32.Timers;
 with HAL;                  use HAL;
 
@@ -84,7 +85,7 @@ package Ecg_Sensor is
                   Default_Value => Virtual_ADC.CH_FLASH,
                   Action_Fn     => Return_Arg'Access
                );
-      
+
       package Enable_Trigger is new Commands_Interpreter.Discrete_Accessor (T => Boolean,
                   Key           => "ENABLE_TRIGGER",
                   Default_Value => FALSE,

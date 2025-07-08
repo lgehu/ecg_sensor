@@ -10,8 +10,9 @@ package body Virtual_ADC is
 
    type Sample_Buffer_Type is array (Natural range <>) of Sample;
 
-   Sample_Buffer : Sample_Buffer_Type (1 .. 100);
-   Sample_Index  : Natural := 1;
+   Sample_Buffer : Sample_Buffer_Type (1 .. Buffer_Size);
+   
+   Sample_Index : Natural := 1;
    pragma Atomic (Sample_Index);
 
    Flash_Index   : Natural := 1;
@@ -136,7 +137,13 @@ package body Virtual_ADC is
       Sample_Buffer (Sample_Index) := (Value => Value, 
                                        Timestamp =>  Clock - Epoch, 
                                        Channel_Source => Channel_Source);
-      Sample_Index := (Sample_Index mod Sample_Buffer'Length) + 1;
+
+      if (Sample_Index + 1) > Sample_Buffer'Length then
+         Sample_Buffer (1 .. Sample_Index - 1) := Sample_Buffer (2 .. Sample_Index);
+      else
+         Sample_Index := Sample_Index + 1;
+      end if;
+
    end Add_Sample;
 
    function Pop_Sample return Sample is
@@ -144,7 +151,8 @@ package body Virtual_ADC is
    begin
       if Has_Sample then
          Disable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
-         S := Sample_Buffer (Sample_Index - 1);
+         S := Sample_Buffer (1);
+         Sample_Buffer (1 .. Sample_Index - 1) := Sample_Buffer (2 .. Sample_Index);
          Sample_Index := Sample_Index - 1;
          Enable_Interrupt (ADC_Timer, Timer_Update_Interrupt);
       else
@@ -157,7 +165,7 @@ package body Virtual_ADC is
    begin
       Sample_Index := 1;
    end Reset_Buffer;
-
+ 
    function Has_Sample return Boolean is
    Index : Natural := 0;
    begin
