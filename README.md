@@ -36,7 +36,6 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 | RESET               | Restart the board | None |
 | START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied.  | None |  
 | STOP                | Stop automatic sampling. Reset the sample index to 0 if the flash channel is selected. | None |
-| PAUSE               | Stop sampling and keep the actual sample index if the input channel is the FLASH. To resume sampling, send a START command. | None |
 | NEXT                | Request N sample. No need to start sampling. | 0 < Integer_Value |
 | VERSION             | Ask for the ecg version. | None |
 | SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value |
