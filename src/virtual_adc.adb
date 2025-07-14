@@ -116,14 +116,8 @@ package body Virtual_ADC is
 
    procedure Stop_Sampling is
    begin
-      case Channel_Source is
-         when CH_FLASH => 
-            Disable (ADC_Timer);
-         when CH_ADC =>
-            Disable (ADC_Timer);
-            Disable (ADC_Converter);
-         when others => null;
-      end case;
+      Disable (ADC_Timer);
+      Disable (ADC_Converter);
       Sampling := False;
    end Stop_Sampling;
 

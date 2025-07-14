@@ -183,7 +183,7 @@ package body Ecg_Sensor is
    Next_Sample : Sample;
    begin
 
-      if not Virtual_ADC.Has_Sample then
+      if not Virtual_ADC.Is_Sampling or not Virtual_ADC.Has_Sample then
           return;
       end if;
 
