@@ -1,21 +1,21 @@
 with Ada.Exceptions; use Ada.Exceptions; 
 
-with Ecg_Sensor;
-with Peripherals; use Peripherals;
-with UART_USB; use UART_USB;
-with Virtual_ADC;
+with Sensor_Handler; use Sensor_Handler;
+with Ecg_Sensor; 
+with Commands_Interpreter;
 
 procedure Main is
+   Sensor : Ecg_Sensor.Ecg_Sensor_Type;
 begin
-   USBCOM.Initialize (UART_BAUDRATE);
-
    begin
-      Ecg_Sensor.Initialize;
-      Ecg_Sensor.Update_Blocking;
+      Sensor_Handler.Initialize (Sensor);
+      Sensor_Handler.Start_Sensor;
    exception
       when E : Constraint_Error =>
-         Ecg_Sensor.Send_Command (Exception_Message (E));
+         Sensor_Handler.Send_Command (Exception_Message (E));
       when E : Program_Error    => 
-         Ecg_Sensor.Send_Command (Exception_Message (E));
+         Sensor_Handler.Send_Command (Exception_Message (E));
+      when E: Commands_Interpreter.Commands_Exception =>
+         Sensor_Handler.Send_Command (Exception_Message (E));
    end;
 end Main;

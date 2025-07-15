@@ -105,7 +105,7 @@ package body Commands_Interpreter is
       procedure Check_Registered is
       begin
          if not Is_Registered then
-            raise Commands_Exception with "Argument is not registered";
+            raise Commands_Exception with Key & " is not registered";
          end if;
       end Check_Registered;
    
