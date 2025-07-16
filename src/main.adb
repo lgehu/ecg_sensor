@@ -3,9 +3,11 @@ with Ada.Exceptions; use Ada.Exceptions;
 with Sensor_Handler; use Sensor_Handler;
 with Ecg_Sensor; 
 with Commands_Interpreter;
+with Speech_Detector;
 
 procedure Main is
-   Sensor : Ecg_Sensor.Ecg_Sensor_Type;
+  -- Sensor : Ecg_Sensor.Ecg_Sensor_Type;
+  Sensor : Speech_Detector.Speech_Detector_Type;
 begin
    begin
       Sensor_Handler.Initialize (Sensor);
