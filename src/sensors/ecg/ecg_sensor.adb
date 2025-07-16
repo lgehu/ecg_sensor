@@ -27,7 +27,6 @@ package body Ecg_Sensor is
    SENSOR_NAME    : constant String := "ECG Sensor";
    SENSOR_VERSION : constant String := "1.0";
 
-   
    overriding 
    function Get_Version (This : in out Ecg_Sensor_Type) return String is
    begin
@@ -68,14 +67,22 @@ package body Ecg_Sensor is
       if PanTompkins.Is_Peak_Detected then
          LED_Ctrl.Start_Blinking;
       end if;
-
-      -- Send sample if there is a peak and trigger is enabled 
-      if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) then
-         return False;
-      end if;
+      --  -- Send sample if there is a peak and trigger is enabled 
+      --  if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) then
+      --     return False;
+      --  --  end if;
+      Sample_Out := (Timestamp => Sample_In.Timestamp,
+                     Value => Result,
+                     Channel_Source => Sample_In.Channel_Source);
 
       return True;
    end Process_Sample;
+
+   overriding 
+   function Is_Triggered (This : in out Ecg_Sensor_Type) return Boolean is
+   begin
+      return PanTompkins.Is_Peak_Detected;
+   end Is_Triggered;
 
    overriding
    procedure Initialize (This : in out Ecg_Sensor_Type) is

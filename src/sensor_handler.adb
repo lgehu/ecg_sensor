@@ -1,3 +1,4 @@
+with Ecg_Sensor;
 with Peripherals; use Peripherals;
 with UART_USB; use UART_USB;
 
@@ -45,9 +46,9 @@ package body Sensor_Handler is
    procedure Start_Sampling (Input : Commands_Interpreter.Argument; Valid : Boolean) is
    begin
       if not Virtual_ADC.Is_Sampling then
-         Current_Sensor.Start;
          Virtual_ADC.Set_Sample_Rate (Sample_Rate.Get_Value);
          Virtual_ADC.Start_Sampling (Input_Channel.Get_Value);
+         Current_Sensor.Start;
       end if;
    end Start_Sampling;
 
@@ -89,12 +90,12 @@ package body Sensor_Handler is
    begin
       case Format is
          when OUT_ASCII =>
-            -- Send_Command (Time_Stamp'Image & ";" & Input.Value'Image & ";" & PanTompkins.Is_Peak_Detected'Image);
-            Send_Command (Time_Stamp'Image & ";" & Input.Value'Image);
+            Send_Command (Time_Stamp'Image & ";" & Input.Value'Image & ";" & Current_Sensor.Is_Triggered'Image);
+            --Send_Command (Time_Stamp'Image & ";" & Input.Value'Image);
          when FLOAT32 =>
             Write_UInt_32 (USBCOM, Time_Stamp, BIG_ENDIAN, Status);
             Write_Float_32 (USBCOM, Input.Value, BIG_ENDIAN, Status);
-            -- USBCOM.Put_Blocking ((if PanTompkins.Is_Peak_Detected then 1 else 0), Status, Time_Span_Last);
+            USBCOM.Put_Blocking ((if Current_Sensor.Is_Triggered then 1 else 0), Status, Time_Span_Last);
          when others =>
             null;
       end case;
@@ -173,9 +174,11 @@ package body Sensor_Handler is
          end if;
       end if;
 
-      Send_Sample ((Value => Result.Value, 
-                  Timestamp => Next_Sample.Timestamp,
-                  Channel_Source => Next_Sample.Channel_Source), Output_Format.Get_Value);
+      if Enable_Trigger.Get_Value and not Current_Sensor.Is_Triggered then
+         return;
+      end if;
+
+      Send_Sample (Result, Output_Format.Get_Value);
 
    end Process_Sample;
 

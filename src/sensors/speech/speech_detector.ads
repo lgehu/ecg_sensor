@@ -15,6 +15,8 @@ package Speech_Detector is
 
    overriding function Get_Name    (This : in out Speech_Detector_Type) return String;
 
+   overriding function Is_Triggered (This : in out Speech_Detector_Type) return Boolean;
+
    overriding function  Process_Sample 
    (This : in out Speech_Detector_Type; 
    Sample_In : Virtual_ADC.Sample ; 

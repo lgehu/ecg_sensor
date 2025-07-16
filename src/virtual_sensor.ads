@@ -14,6 +14,8 @@ package Virtual_Sensor is
 
    function Get_Name    (This : in out Sensor_Type) return String is abstract;
 
+   function Is_Triggered (This : in out Sensor_Type) return Boolean is abstract;
+
    function  Process_Sample 
    (This : in out Sensor_Type ; 
    Sample_In : Virtual_ADC.Sample ; 

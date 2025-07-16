@@ -19,6 +19,8 @@ package Ecg_Sensor is
    overriding function Get_Version (This : in out Ecg_Sensor_Type) return String;
 
    overriding function Get_Name    (This : in out Ecg_Sensor_Type) return String; 
+
+   overriding function Is_Triggered (This : in out Ecg_Sensor_Type) return Boolean;
    
    overriding function  Process_Sample 
    (This : in out Ecg_Sensor_Type; 
@@ -48,12 +50,6 @@ package Ecg_Sensor is
                Key            => "OUTPUT_STAGE",
                Default_Value  => PanTompkins.Stage_Integrated,
                Action_Fn      => Sensor_Handler.Return_Arg'Access
-            );
-
-   package Enable_Trigger is new Commands_Interpreter.Discrete_Accessor (T => Boolean,
-               Key           => "ENABLE_TRIGGER",
-               Default_Value => FALSE,
-               Action_Fn     => Sensor_Handler.Return_Arg'Access
             );
 
 end Ecg_Sensor;

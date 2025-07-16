@@ -80,6 +80,12 @@ package Sensor_Handler is
                Action_Fn      => Send_Version'Access
             );
 
+   package Enable_Trigger is new Commands_Interpreter.Discrete_Accessor (T => Boolean,
+               Key           => "ENABLE_TRIGGER",
+               Default_Value => FALSE,
+               Action_Fn     => Sensor_Handler.Return_Arg'Access
+            );
+
    --  package Init_Cmd is new Commands_Interpreter.Action_Accessor (
    --              Key            => "INIT", 
    --              Action_Fn      =>  Init_Sampling'Access

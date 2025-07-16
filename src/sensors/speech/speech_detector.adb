@@ -41,5 +41,11 @@ package body Speech_Detector is
    begin
       return True;
    end Process_Sample;
+
+   overriding
+   function Is_Triggered (This : in out Speech_Detector_Type) return Boolean is
+   begin
+      return False;
+   end Is_Triggered;
   
 end Speech_Detector;
