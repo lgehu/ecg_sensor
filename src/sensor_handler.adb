@@ -13,7 +13,6 @@ with Ada.Strings.Fixed; use Ada.Strings.Fixed;
 
 package body Sensor_Handler is
 
-   ECG_VERSION : String := "0.1";
    CR_LF : String := ASCII.CR & ASCII.LF;
 
    package UART_STR renames UART_USB.B_Str;
@@ -152,6 +151,7 @@ package body Sensor_Handler is
       end if;
    end Read_Command;
 
+   -- Rename the procedure
    procedure Process_Sample is 
    Next_Sample, Result : Sample;
    begin
@@ -162,7 +162,6 @@ package body Sensor_Handler is
 
       Next_Sample := Virtual_ADC.Pop_Sample;
       
-      -- Replace with generic sensor
       if not Current_Sensor.Process_Sample (Next_Sample, Result) then
          return;
       end if;

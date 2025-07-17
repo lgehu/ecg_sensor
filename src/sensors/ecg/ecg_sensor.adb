@@ -4,6 +4,7 @@ with Ada.Unchecked_Conversion;
 
 with HAL;           use HAL;
 with HAL.UART;      use HAL.UART;
+with Hook_Test;
 with STM32.Board;   use STM32.Board;
 with STM32.Device;  use STM32.Device;
 with STM32.GPIO;    use STM32.GPIO;
@@ -65,12 +66,10 @@ package body Ecg_Sensor is
       Result := PanTompkins.Process_Sample (Sample_In.Value);
 
       if PanTompkins.Is_Peak_Detected then
-         LED_Ctrl.Start_Blinking;
+         --LED_Ctrl.Start_Blinking;
+         This.Hook (This);
       end if;
-      --  -- Send sample if there is a peak and trigger is enabled 
-      --  if (Enable_Trigger.Get_Value and not PanTompkins.Is_Peak_Detected) then
-      --     return False;
-      --  --  end if;
+ 
       Sample_Out := (Timestamp => Sample_In.Timestamp,
                      Value => Result,
                      Channel_Source => Sample_In.Channel_Source);
