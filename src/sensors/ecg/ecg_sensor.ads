@@ -22,11 +22,10 @@ package Ecg_Sensor is
 
    overriding function Is_Triggered (This : in out Ecg_Sensor_Type) return Boolean;
    
-   overriding function  Process_Sample 
+   overriding procedure  Process_Sample 
    (This : in out Ecg_Sensor_Type; 
    Sample_In : Virtual_ADC.Sample ; 
-   Sample_Out : out Virtual_ADC.Sample)
-   return Boolean;
+   Sample_Out : out Virtual_ADC.Sample);
 
    package Amplitude_Coef is new Commands_Interpreter.Real_Accessor (T => PanTompkins.Amplitude_Treshold_Coef_Type,
                Key            => "AMPLITUDE_COEF",

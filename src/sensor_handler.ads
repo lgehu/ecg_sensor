@@ -7,7 +7,8 @@ with Virtual_Sensor; use Virtual_Sensor;
 package Sensor_Handler is
 
    -- Add callback buffer called everytime we get a new sample
-   
+   -- Activate/desactivate terminal
+
    type Output_Format_Type is (OUT_ASCII, FLOAT32);
    subtype Sample_Rate_Type is Positive range 10 .. 1000;  
 

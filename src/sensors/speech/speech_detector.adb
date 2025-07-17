@@ -33,13 +33,12 @@ package body Speech_Detector is
       return SENSOR_NAME;
    end Get_Name;
 
-   overriding function  Process_Sample 
+   overriding procedure  Process_Sample 
    (This : in out Speech_Detector_Type; 
    Sample_In : Virtual_ADC.Sample ; 
-   Sample_Out : out Virtual_ADC.Sample)
-   return Boolean is
+   Sample_Out : out Virtual_ADC.Sample) is
    begin
-      return True;
+      null;
    end Process_Sample;
 
    overriding

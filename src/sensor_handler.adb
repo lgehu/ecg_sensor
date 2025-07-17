@@ -162,9 +162,7 @@ package body Sensor_Handler is
 
       Next_Sample := Virtual_ADC.Pop_Sample;
       
-      if not Current_Sensor.Process_Sample (Next_Sample, Result) then
-         return;
-      end if;
+      Current_Sensor.Handle_Sample (Next_Sample, Result);
 
       if Next_Cmd.Accessor.Get_Value > 0 then
          Next_Cmd.Accessor.Set_Value (Next_Cmd.Accessor.Get_Value - 1);

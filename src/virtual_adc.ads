@@ -30,7 +30,6 @@ package Virtual_ADC is
 
    function Has_Sample return Boolean;
 
-
    function Is_Sampling return Boolean;
 
    protected Controller is

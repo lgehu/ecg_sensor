@@ -9,12 +9,13 @@ with Virtual_Sensor;
 with Hook_Test;
 
 procedure Main is
- --Sensor : Ecg_Sensor.Ecg_Sensor_Type;
- Sensor : Speech_Detector.Speech_Detector_Type;
+   Sensor : Ecg_Sensor.Ecg_Sensor_Type;
+ --Sensor : Speech_Detector.Speech_Detector_Type;
 
 begin
 
-   Sensor.Set_Hook (Hook_Test.Hook'Access);
+   Hook_Test.Initialize;
+   Sensor.Set_Hook (Hook_Test.Hook'Access, Virtual_Sensor.ON_TRIGGER);
 
    begin
       Sensor_Handler.Initialize (Sensor);

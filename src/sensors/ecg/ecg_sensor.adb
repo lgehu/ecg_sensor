@@ -56,25 +56,18 @@ package body Ecg_Sensor is
    end Stop;
 
    overriding 
-   function  Process_Sample 
+   procedure  Process_Sample 
    (This : in out Ecg_Sensor_Type; 
    Sample_In : Virtual_ADC.Sample ; 
-   Sample_Out : out Virtual_ADC.Sample)
-   return Boolean is
+   Sample_Out : out Virtual_ADC.Sample) is
    Result : IEEE_Float_32 := 0.0;
    begin
       Result := PanTompkins.Process_Sample (Sample_In.Value);
-
-      if PanTompkins.Is_Peak_Detected then
-         --LED_Ctrl.Start_Blinking;
-         This.Hook (This);
-      end if;
  
       Sample_Out := (Timestamp => Sample_In.Timestamp,
                      Value => Result,
                      Channel_Source => Sample_In.Channel_Source);
 
-      return True;
    end Process_Sample;
 
    overriding 
@@ -86,10 +79,6 @@ package body Ecg_Sensor is
    overriding
    procedure Initialize (This : in out Ecg_Sensor_Type) is
    begin
-      -- Controllers
-      LED_Ctrl.Initialize;
-      LED_Ctrl.Set_Frequency (15.0);
-
       -- Parameters
       Amplitude_Coef.Register;
       Peak_Distance.Register;
