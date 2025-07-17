@@ -42,7 +42,7 @@ package body Ecg_Sensor is
    overriding
    procedure Start (This : in out Ecg_Sensor_Type) is
    begin
-      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Get_Value), 
+      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Accessor.Get_Value_Or_Default), 
                               Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
                               Minimal_Peak_Distance_Sec => Peak_Distance.Get_Value, 
                               Window_Sec => Window_Sec.Get_Value, 
@@ -86,7 +86,7 @@ package body Ecg_Sensor is
       Window_Sec.Register;
       Output_Stage.Register;
 
-      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Get_Value), 
+      PanTompkins.Initialize ((Sampling_Frequency => PanTompkins.Sampling_Frequency_Type (Sample_Rate.Accessor.Get_Value_Or_Default), 
                            Amplitude_Treshold_Coef => Amplitude_Coef.Get_Value,
                            Minimal_Peak_Distance_Sec => Peak_Distance.Get_Value, 
                            Window_Sec => Window_Sec.Get_Value, 

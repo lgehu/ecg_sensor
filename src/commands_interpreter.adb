@@ -182,6 +182,15 @@ package body Commands_Interpreter is
             return Arg.Value;
          end;
       end Get_Value;
+      
+      function Get_Value_Or_Default return T is
+      begin
+         if not Is_Registered then
+            return Get_Default;
+         else
+            return Get_Value;
+         end if;
+      end Get_Value_Or_Default;
 
    end Arg_Accessor;
 

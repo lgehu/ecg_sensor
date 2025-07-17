@@ -57,6 +57,8 @@ package Commands_Interpreter is
 
       function Get_Value return T;
 
+      function Get_Value_Or_Default return T;
+
       -- Set current value to default value
       procedure Restore; 
 
