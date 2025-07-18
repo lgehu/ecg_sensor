@@ -18,8 +18,4 @@ package vus_functions is
    
    function Hamming_Window(N : Positive) return Float_Array;
    
-   function Interpolate_VUS(VUS : Float_Array; Frame_Length : Positive; Hop_Size : Positive; Signal_Length: Natural) return Float_Array;
-   
-   function VUS_From_Frame(Frame : Float_Array) return Float;
-
 end vus_functions;

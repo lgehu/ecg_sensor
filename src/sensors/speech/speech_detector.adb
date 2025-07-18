@@ -1,20 +1,13 @@
-with vus_functions;
-with Interfaces; use Interfaces;
-
 package body Speech_Detector is
 
    SENSOR_VERSION : String := "0.1";
    SENSOR_NAME    : String := "Speech detector";
 
-   Frame_Length : constant := 480;  -- 30 ms
-
-   subtype Frame_Range is Natural range 0 .. Frame_Length - 1;
-   Frame : vus_functions.Float_Array (Frame_Range);
-
    overriding 
    procedure Initialize (This : in out Speech_Detector_Type) is
+   Init_Signal : VUS.Float_Array := (others => 0.0); 
    begin
-      null;
+      VUS.Initialize (This.State, Init_Signal);
    end Initialize;
    
    overriding
@@ -46,15 +39,32 @@ package body Speech_Detector is
    Sample_In : Virtual_ADC.Sample ; 
    Sample_Out : out Virtual_ADC.Sample) is
    begin
-      Frame (0 .. Frame'Length - 2) := Frame (1 .. Frame'Length - 1);
-      Frame (Frame'Length - 1) := Float (Sample_In.Value);
-      Sample_Out.value := IEEE_Float_32 (vus_functions.VUS_From_Frame (Frame));
+      VUS.VUS_Compute_Frame (This.State, This.Buffer, This.Current_Label);
+
+      case This.Current_Label is
+         when VUS.Voiced => 
+            Sample_Out.Value := 1.0;
+         when VUS.Silent =>
+            Sample_Out.Value := 0.0;
+         when VUS.Unvoiced =>
+            Sample_Out.Value := 0.5;
+      end case; 
+
    end Process_Sample;
 
    overriding
    function Is_Triggered (This : in out Speech_Detector_Type) return Boolean is
    begin
-      return False;
+      if This.Current_Label = This.Trigger_Label then
+         return True;
+      else
+         return False;
+      end if;
    end Is_Triggered;
+
+   procedure Set_Trigger_Label (This : in out Speech_Detector_Type ; Label : VUS.VUS_Label) is
+   begin
+      This.Trigger_Label := Label;
+   end Set_Trigger_Label;
   
 end Speech_Detector;
