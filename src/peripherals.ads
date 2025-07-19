@@ -20,7 +20,7 @@ package Peripherals is
    -- ADC
    ADC_Converter     : Analog_To_Digital_Converter renames ADC_1;
    ADC_Input_Channel : constant Analog_Input_Channel := 0;
-   ADC_Input         : constant GPIO_Point := PA0;
+   ADC_Input         : aliased GPIO_Point := PA0;
         
    -- UART
    TX_Pin : aliased GPIO_Point := PA2;

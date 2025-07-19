@@ -2,9 +2,9 @@ with AdaData;
 with HAL;           use HAL;
 with STM32.Timers;  use STM32.Timers;
 with STM32.Device;  use STM32.Device;
-with STM32.ADC;     use STM32.ADC;
 with STM32.Board;   use STM32.Board;
 with STM32.GPIO;    use STM32.GPIO;
+with STM32.ADC;     use STM32.ADC;
 
 package body Virtual_ADC is
 

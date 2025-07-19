@@ -4,6 +4,8 @@ with Interfaces; use Interfaces;
 with AdaData; use AdaData;
 with Virtual_Sensor; use Virtual_Sensor;
 
+-- This package handle the commands interpreter and the UART.
+-- This allow users to send commands with a terminal. 
 package Sensor_Handler is
 
    -- Add callback buffer called everytime we get a new sample

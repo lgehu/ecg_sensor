@@ -123,6 +123,7 @@ package body Sensor_Handler is
       Input_Channel.Register;
       Input_Gain.Register;
       Sample_Rate.Register;
+      Enable_Trigger.Register;
 
       -- Action
       Get_Args.Register;
