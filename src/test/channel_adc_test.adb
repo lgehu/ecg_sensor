@@ -4,7 +4,7 @@ with STM32.Device; use STM32.Device;
 with UART_USB;
 with Ada.Exceptions; use Ada.Exceptions;
 
-procedure Channel_Test is
+procedure Channel_ADC_Test is
    Channel : Channel_ADC_Type (Buffer_Size => 50, 
                               ADC_GPIO => PA0'Access, 
                               ADC_Channel => 0,
@@ -38,4 +38,4 @@ begin
          UART_USB.Transmit_String (USBCOM, Exception_Message (E));
    end;
 
-end Channel_Test;
+end Channel_ADC_Test;
