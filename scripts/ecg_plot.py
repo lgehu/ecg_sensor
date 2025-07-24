@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
         ecg_com.send_command(ser, f"OUTPUT_FORMAT={OUTPUT_FORMAT}", True)
         ecg_com.send_command(ser, f"SAMPLE_RATE={SAMPLE_RATE}",     True)
-        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_INTEGRATED",  True)
+        ecg_com.send_command(ser, "OUTPUT_STAGE=STAGE_RAW",  True)
         ecg_com.send_command(ser, "INPUT_CHANNEL=CH_FLASH",         True)
         ecg_com.send_command(ser, "AMPLITUDE_COEF=1.5",             True)
         ecg_com.send_command(ser, "INPUT_GAIN=1.0",                 True)
@@ -92,7 +92,7 @@ if __name__ == "__main__":
 
         plt.plot(timestamps, values, 'r')
         plt.xlabel("Time (s)")
-        plt.ylabel("BPM or amplitude")
+        plt.ylabel("Amplitude")
 
         for i in peak_stamp:
             plt.axvline(i)

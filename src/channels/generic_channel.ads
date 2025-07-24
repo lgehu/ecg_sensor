@@ -20,19 +20,11 @@ package Generic_Channel is
       Open : Boolean;
    end record;
 
-   procedure Open_Channel (This : in out Generic_Channel_Type) is abstract;
-
-   procedure Close_Channel (This : in out Generic_Channel_Type) is abstract;
-
-   procedure Read_Channel (This : in out Generic_Channel_Type) is abstract;
-
    procedure Reset_Buffer (This : in out Generic_Channel_Type); 
    
    function Pop_Sample (This : in out Generic_Channel_Type) return Sample;
 
    function Has_Sample (This : in out Generic_Channel_Type) return Boolean;
-
-   function Is_Open (This : in out Generic_Channel_Type) return Boolean;
 
    procedure Add_Sample (This : in out Generic_Channel_Type ; Value :Value_Type);
 

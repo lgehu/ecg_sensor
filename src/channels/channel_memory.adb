@@ -10,13 +10,20 @@ package body Channel_Memory is
    procedure Open_Channel (This : in out Channel_Memory_Type) is
    begin
       This.Memory_Offset := 0;
+      This.Open := True;
    end Open_Channel;
 
    overriding
    procedure Close_Channel (This : in out Channel_Memory_Type) is
    begin
-      null;
+      This.Open := False;
    end Close_Channel;
+
+   overriding 
+   function Is_Open (This : in out Channel_Memory_Type) return Boolean is
+   begin
+      return This.Open;
+   end Is_Open;
 
    overriding
    procedure Read_Channel (This : in out Channel_Memory_Type) is

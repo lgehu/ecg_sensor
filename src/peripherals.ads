@@ -43,6 +43,4 @@ package Peripherals is
    User_Btn : constant GPIO_Point := PC13;
    LED_Ctrl : LED_Controller.Controller (Timer_7'Access, Timer_Interrupt, LED_Pin'Access);
 
-
-
 end Peripherals;

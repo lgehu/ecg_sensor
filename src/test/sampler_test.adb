@@ -1,40 +1,46 @@
+with Generic_Channel;
+with Channel_ADC;
+with Sampler; use Sampler;
 with Channel_ADC; use Channel_ADC;
-with Channel_Memory;
 with Peripherals; use Peripherals;
 with STM32.Device; use STM32.Device;
 with UART_USB;
 with Ada.Exceptions; use Ada.Exceptions;
-with Interfaces; use Interfaces;
+with Channels;
 
-procedure Channel_Memory_Test is
+procedure Sampler_Test is 
 
-   package Flash_Float is new Channel_Memory (Value_Type => IEEE_Float_32);
+   Channel : aliased Channel_ADC_Type (Buffer_Size => 50, 
+                              ADC_GPIO => PA0'Access, 
+                              ADC_Channel => 0,
+                              ADC_Converter => ADC_1'Access);
 
-   Channel : Flash_Float.Channel_Memory_Type (
-         Buffer_Size => 50, 
-         From_Addr => 16#8060000#,
-         Length => 1000);
-   S : Flash_Float.Channel_Gen.Sample;
+   S : Channel_ADC.Channel_32bits.Sample;
 
 begin
 
    USBCOM.Initialize (115_200);
    UART_USB.Transmit_String (USBCOM, "Test");
 
+   Channel.Open_Channel;
+
+   Sampler_Ctrl.Initialize;
+   Sampler_Ctrl.Set_Sample_Rate (200);
+   Sampler_Ctrl.Set_Channel (Channel'Unchecked_Access);
+
    begin
 
-      Channel.Open_Channel;
-      
-      loop
-         Channel.Read_Channel;
+      Sampler_Ctrl.Start_Sampling;
+      UART_USB.Transmit_String (USBCOM, "test2");
 
+      loop
          if Channel.Has_Sample then
             S := Channel.Pop_Sample;
             UART_USB.Transmit_String (USBCOM, S.Value'Image & ASCII.CR & ASCII.LF);
          end if;
       end loop;
 
-      Channel.Close_Channel;
+      Sampler_Ctrl.Stop_Sampling;
 
    exception
       when E : Constraint_Error =>
@@ -43,4 +49,4 @@ begin
          UART_USB.Transmit_String (USBCOM, Exception_Message (E));
    end;
 
-end Channel_Memory_Test;
+end Sampler_Test;

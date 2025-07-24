@@ -41,12 +41,14 @@ package body Channel_ADC is
    procedure Open_Channel (This : in out Channel_ADC_Type) is
    begin
       Initialize_ADC (This);
+      This.Open := True;
    end Open_Channel;
 
    overriding 
    procedure Close_Channel (This : in out Channel_ADC_Type) is
    begin
       Disable (This.ADC_Converter.all);
+      This.Open := False;
    end Close_Channel;
    
    overriding
@@ -59,6 +61,12 @@ package body Channel_ADC is
          This.Add_Sample (HAL.UInt32 (Conversion_Value (This.ADC_Converter.all)));
       end if;
    end Read_Channel;
+
+   overriding
+   function Is_Open (This : in out Channel_ADC_Type) return Boolean is 
+   begin
+      return This.Open;
+   end Is_Open;
 
 
 end Channel_ADC;
