@@ -31,7 +31,6 @@ begin
    begin
 
       Sampler_Ctrl.Start_Sampling;
-      UART_USB.Transmit_String (USBCOM, "test2");
 
       loop
          if Channel.Has_Sample then

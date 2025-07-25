@@ -1,5 +1,5 @@
 # 1. Introduction
-This README explains how the code is design, what is does and usages of some packages for developpers.
+This README explains how the code is design, what is does and usages of some packages.
 
 # 2. Main application
 The default compilation behaviour when using make builds the CLI application.  
@@ -11,6 +11,7 @@ This folder contain abstraction of peripherals as channels with Ada's polymorphi
 a better code design. Plus, channels as their own circular buffer, that can lead to multichannel sampling in the same time.
 It is not integrated in the Main application yet, as this one is currently using the package 
 "virtual_adc" to handle channels.  
+Channels usages can be found under the test folder ([channel_adc_test](test/channel_adc_test.adb) and [channel_memory_test](test/channel_memory_test.adb))
 
 TODO: Continue doc for this chapter
 
@@ -42,3 +43,15 @@ Using a state machine, it swap between different peripherals, thus the code can 
 TODO: Remove "with Peripherals" in the [virtual_adc](controllers/virtual_adc.ads) and the [sampler](controllers/sampler.ads), instead add discriminant to configure peripherals.
 
 # 7. Sensors
+Sensors are part of the main application and are design to be working with the sensor_handler. 
+There is currently two sensors, ECG and speech detector.   
+The ECG sensor uses the Pantompkins algorithm to detect peaks and calculate the heart rate.  
+The speech detector detect if voice is detected in an audio source.
+Users can attach callback to sensor to be notified when an event occured, a peak for the ecg or 
+a voice for the speech detector.
+The [full_demo.adb] is a pipeline demonstration that uses channel, sampler and a sensor. 
+
+# 8. Tests
+Test can be compiled with the following command:   
+`make MAIN=full_demo`   
+You can replace 'full_demo' by any others files in the folder without extension.

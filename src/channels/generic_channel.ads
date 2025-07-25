@@ -1,7 +1,6 @@
 with Ada.Real_Time; use Ada.Real_Time;
 with HAL;
 
-
 generic 
    type Value_Type is private;
 package Generic_Channel is
