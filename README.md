@@ -9,16 +9,7 @@ wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-b
 unzip alr-2.0.2-bin-x86_64-linux.zip
 mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
 alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1
-```
-Then, download the ADL fork for Alire beside this project:   
-```bash
-git clone https://github.com/lgehu/alr_adl_crates.git
-```
-Your_folder   
-│  
-├── ecg_sensor  
-├── alr_adl_crates  
-    
+```    
 ## COMPILATION ##
 Plug your device to your computer, then to compile the Ada project run:   
 `make`  
