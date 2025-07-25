@@ -7,7 +7,10 @@ You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm
 ```bash
 wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip
 unzip alr-2.0.2-bin-x86_64-linux.zip
-mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
+mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr
+alr index --add=git+https://github.com/lgehu/alire-index.git --name private
+alr get ecg_sensor
+cd ecg_sensor
 alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1
 ```    
 ## COMPILATION ##
