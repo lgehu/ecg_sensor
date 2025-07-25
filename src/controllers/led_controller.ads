@@ -6,6 +6,7 @@ with STM32.Timers;  use STM32.Timers;
 package LED_Controller is
 
    -- Controller for blinking a LED 3 times at a given frequency.
+   -- TODO: Add a procedure to set the number of time the LED blink
    protected type Controller (Timer_Source : access Timer ; Timer_Interrupt : Interrupt_ID ; GPIO : access GPIO_Point) is
 
       procedure Initialize;
