@@ -29,28 +29,28 @@ Thus, no value will be updated if you send a value of incorrect format or out of
 Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greater than 0) is expected.
 
 **General commands**    
-| Commands/Parameters |  Description  | Argument type
-| :---:               | ------------- | :---:   |    
-| GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String |
-| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode,  the format is: <Time_stamp;Value;Is_peak_Detected> where Time_stamp is the time difference since the board started in millisecond, value is the processed data of the selected stage and Is_peak_Detected is a boolean value with value True when a peak is detected. On binary format, every sample takes 9 bytes. First 4 bytes are the timestamp in ms. Next 4 bytes are the actual float value and the last byte indicate if a peak is detected. Values are in big endian format. | OUT_ASCII &#124; FLOAT32 |
-| RESET               | Restart the board | None |
-| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied.  | None |  
-| STOP                | Stop automatic sampling. Reset the sample index to 0 if the flash channel is selected. | None |
-| NEXT                | Request N sample. No need to start sampling. | 0 < Integer_Value |
-| VERSION             | Ask for the ecg version. | None |
-| SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value |
-| INPUT_CHANNEL       | Select the input source. If CH_BTN is selected, the program is listening for rising edge on the user button. The CH_FLASH channel read the board's flash. | CH_BTN &#124; CH_FLASH &#124; CH_ADC |
-| ENABLE_TRIGGER      | The sensor will send data only if a peak is detected. Works either while auto sampling or using NEXT commands. | TRUE &#124; FALSE |
-| INPUT_GAIN          | Multiplier for input value. | Float |
+| Commands/Parameters |  Description  | Argument type | Reply
+| :---:               | ------------- | :---:   |  :---: |
+| GET_ARGS            | Return all arguments with format KEY=VALUE\r\n or the the value of the specified key if provided. | String | All registered commands with Key=value terminating by new line |
+| OUTPUT_FORMAT       | Set the output format of processed data. On ASCII mode,  the format is: <Time_stamp;Value;Is_peak_Detected> where Time_stamp is the time difference since the board started in millisecond, value is the processed data of the selected stage and Is_peak_Detected is a boolean value with value True when a peak is detected. On binary format, every sample takes 9 bytes. First 4 bytes are the timestamp in ms. Next 4 bytes are the actual float value and the last byte indicate if a peak is detected. Values are in big endian format. | OUT_ASCII &#124; FLOAT32 | OK or Invalid parameter |
+| RESET               | Restart the board | None | OK or Invalid parameter |
+| START               | Start automatic sampling on the selected input channel (default from flash) and send back result with the selected output format. During sampling, some parameters of the ECG sensor may not be applied.  | None | 
+| STOP                | Stop automatic sampling. Reset the sample index to 0 if the flash channel is selected. | None | 
+| NEXT                | Request N sample. No need to start sampling. | 0 < Integer_Value | See OUTPUT_FORMAT description |
+| VERSION             | Ask for the ecg version. | None | ECG_Sensor vX.X |
+| SAMPLE_RATE         | Set the output frequency during the automatic sampling. Default value is the sample rate defined in the ECG signal imported in the board's flash. | 0 < Integer_Value | OK or Invalid parameter |
+| INPUT_CHANNEL       | Select the input source. If CH_BTN is selected, the program is listening for rising edge on the user button. The CH_FLASH channel read the board's flash. | CH_BTN &#124; CH_FLASH &#124; CH_ADC | OK or Invalid parameter |
+| ENABLE_TRIGGER      | The sensor will send data only if a peak is detected. Works either while auto sampling or using NEXT commands. | TRUE &#124; FALSE | OK or Invalid parameter |
+| INPUT_GAIN          | Multiplier for input value. | Float | OK or Invalid parameter |
 | INIT                | Reset the Pantompkins algorithm, start the sampling timer and reset the sample index to zero for the flash channel. Use it before calling NEXT. | None |
 
 **ECG commands**
- Commands/Parameters |  Description  | Argument type
-| :---:              | ------------- | :---:   |    
-| AMPLITUDE_COEF     | Set the multiplier for the amplitude threshold. This treshold is the average of the integrated data (Moving window) during the Pan-Tompkins algorithm. | 0.0 < Float_Value < 2.0  |
-| PEAK_DISTANCE      | Set the minimal time distance in second between to peak. | 0.0 < Float_Value |
-|  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value |
-| OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Row &#124; Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR |
+ Commands/Parameters |  Description  | Argument type | Reply |
+| :---:              | ------------- | :---:   | :---: |
+| AMPLITUDE_COEF     | Set the multiplier for the amplitude threshold. This treshold is the average of the integrated data (Moving window) during the Pan-Tompkins algorithm. | 0.0 < Float_Value < 2.0  | OK or Invalid parameter |
+| PEAK_DISTANCE      | Set the minimal time distance in second between to peak. | 0.0 < Float_Value | OK or Invalid parameter |
+|  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value | OK or Invalid parameter |
+| OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Row &#124; Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR | OK or Invalid parameter |
 
 **Limitations**  
 Using the ASCII mode for outputting data induce a huge dealy by the UART. Thus, data acquired from peripherals will be missed and heart rate won't be reliable.
