@@ -2,6 +2,21 @@
 The goal is to virtualize a sensor in the STM32F446RE that can process ECG data to detect heart rate with the Pan-Tompkins algorithm.
 Data are transmit through UART with a python script, then, the MCU process the data in real time and should return the heart rate.
 
+## PREREQUISITES (Linux) ##
+You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
+```bash
+wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip
+unzip alr-2.0.2-bin-x86_64-linux.zip
+mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr
+alr index --add=git+https://github.com/lgehu/alire-index.git --name private
+alr get ecg_sensor
+cd ecg_sensor
+alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1
+```    
+## COMPILATION ##
+Plug your device to your computer, then to compile the Ada project run:   
+`make`  
+
 ## SCRIPTS ##
 - ecg_com.py : Interactive command prompt that send and receive commands to the ECG Sensor. You must build the main program to communicate with the sensor.
 - ecg_plot.py : Example script that automatically configure the sensor and plot the processed ecg signal.
@@ -51,26 +66,6 @@ Example: <SAMPLE_RATE=100.5> send an error because a Natural (All integer greate
 |  WINDOW_SEC        | Moving window length in second during the integration stage. | 0.0 < Float_Value | OK or Invalid parameter |
 | OUTPUT_STAGE       | Set the ouput stage during the Pan-Tompkins algorithm. The last stage return the heart rate  (HR). | Stage_Row &#124; Stage_Filtered &#124; Stage_Derivatived &#124; Stage_Squared &#124; Stage_Integrated &#124; Stage_HR | OK or Invalid parameter |
 
-## PREREQUISITES (Linux) ##
-You will need Alire, st-flash, python3 and the right toolchain for Ada (gnat-arm-elf).  
-```bash
-wget https://github.com/alire-project/alire/releases/download/v2.0.2/alr-2.0.2-bin-x86_64-linux.zip
-unzip alr-2.0.2-bin-x86_64-linux.zip
-mv alr-2.0.2-bin-x86_64-linux/bin /usr/bin/alr`
-alr toolchain --select gnat_arm_elf=14.2.1 gprbuild=22.0.1
-```
-Then, download the ADL fork for Alire beside this project:   
-```bash
-git clone https://github.com/lgehu/alr_adl_crates.git
-```
-Your_folder   
-│  
-├── ecg_sensor  
-├── alr_adl_crates  
-    
-## COMPILATION ##
-Plug your device to your computer, then to compile the Ada project run:   
-`make`  
 ## Flashing an ECG file to the board ## 
 
 ### Testing with object linker 
